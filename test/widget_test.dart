@@ -181,7 +181,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(AppTheme.isDark, false);
 
-    expect(find.text('WORKFLOW PIPELINES'), findsOneWidget);
+    expect(find.text('Active Pipelines'), findsOneWidget);
     expect(find.text('Logout'), findsOneWidget);
 
     await tester.tap(find.text('Logout'));
@@ -208,6 +208,55 @@ void main() {
 
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.textContaining('Welcome, Rahul Sharma!'), findsOneWidget);
+
+    // 9. Test Bottom Navigation Bar Tabs
+    // Tab 1: Pipelines
+    await tester.tap(find.byKey(const Key('bottomNavItem_1')));
+    await tester.pumpAndSettle();
+    expect(find.text('Active Hiring Pipelines'), findsOneWidget);
+    expect(find.text('3 ACTIVE'), findsOneWidget);
+
+    // Tab 2: Opportunities
+    await tester.tap(find.byKey(const Key('bottomNavItem_2')));
+    await tester.pumpAndSettle();
+    expect(find.text('Curated Opportunities'), findsOneWidget);
+    expect(find.textContaining('98% MATCH'), findsOneWidget);
+
+    // Tab 3: MCP & Tools
+    await tester.tap(find.byKey(const Key('bottomNavItem_3')));
+    await tester.pumpAndSettle();
+    expect(find.text('MCP & Agent Tooling'), findsOneWidget);
+    expect(find.text('MCP v2.4'), findsOneWidget);
+
+    // Tab 4: Profile
+    await tester.tap(find.byKey(const Key('bottomNavItem_4')));
+    await tester.pumpAndSettle();
+    expect(find.text('Contact Details'), findsOneWidget);
+    expect(find.text('Flutter & Dart Architecture'), findsOneWidget);
+
+    // Return to Tab 0: Dashboard
+    await tester.tap(find.byKey(const Key('bottomNavItem_0')));
+    await tester.pumpAndSettle();
+    expect(find.text('Hiring Workflow Pipeline'), findsOneWidget);
+
+    // 10. Test Drawer Navigation to Tabs & Modal
+    await tester.tap(find.byKey(const Key('hamburgerMenuButton')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('For Employers'));
+    await tester.pumpAndSettle();
+    expect(find.text('Got It'), findsOneWidget);
+    await tester.tap(find.text('Got It'));
+    await tester.pumpAndSettle();
+
+    // 11. Test Ultra-Narrow Viewport (320px width) for Zero Overflows
+    tester.view.physicalSize = const Size(320, 640);
+    await tester.pumpAndSettle();
+
+    for (int i = 0; i < 5; i++) {
+      await tester.tap(find.byKey(Key('bottomNavItem_$i')));
+      await tester.pumpAndSettle();
+    }
   });
 
   testWidgets('Assessment Fail Flow: Retake Test & Retry', (WidgetTester tester) async {

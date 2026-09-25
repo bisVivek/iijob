@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand_logo.dart';
 import '../widgets/theme_switcher_button.dart';
+import '../widgets/fade_slide_transition.dart';
+import '../widgets/animated_counter.dart';
+import '../widgets/pulsing_badge.dart';
 import 'home_screen.dart';
 import 'animated_signin_screen.dart';
 import 'assessment_screen.dart';
@@ -52,114 +55,132 @@ class AssessmentResultScreen extends StatelessWidget {
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 460),
-              padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 32.0),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: borderColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: isPassed
-                        ? const Color(0xFF005BFF).withValues(alpha: isDark ? 0.25 : 0.12)
-                        : const Color(0xFFEF4444).withValues(alpha: isDark ? 0.25 : 0.08),
-                    blurRadius: 36,
-                    offset: const Offset(0, 14),
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Status Icon with Radial Halo
-                  Center(
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: isPassed
-                              ? [const Color(0xFF10B981), const Color(0xFF059669)]
-                              : [const Color(0xFFF59E0B), const Color(0xFFD97706)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isPassed
-                                ? const Color(0xFF10B981).withValues(alpha: 0.35)
-                                : const Color(0xFFF59E0B).withValues(alpha: 0.35),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
+            child: FadeSlideTransition(
+              delayMs: 100,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 460),
+                padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 32.0),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: borderColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isPassed
+                          ? const Color(0xFF005BFF).withValues(alpha: isDark ? 0.25 : 0.12)
+                          : const Color(0xFFEF4444).withValues(alpha: isDark ? 0.25 : 0.08),
+                      blurRadius: 36,
+                      offset: const Offset(0, 14),
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Status Icon with Radial Halo
+                    Center(
+                      child: PulsingBadge(
+                        glowColor: isPassed ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                        child: Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: isPassed
+                                  ? [const Color(0xFF10B981), const Color(0xFF059669)]
+                                  : [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+                            ),
                           ),
+                          child: Icon(
+                            isPassed ? Icons.verified_rounded : Icons.replay_rounded,
+                            color: Colors.white,
+                            size: 48,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    // Title
+                    Text(
+                      isPassed ? "Assessment Passed! 🎉" : "Assessment Incomplete",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: txtPrimary,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Candidate Greeting & Subtitle
+                    Text(
+                      isPassed
+                          ? "Congratulations, $candidateName! You have successfully verified your profile."
+                          : "Nice try, $candidateName! An 80% passing score is required to unlock full access.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: txtSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    // Score Metric Banner
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: isPassed
+                            ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFECFDF5))
+                            : (isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFFFBEB)),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isPassed
+                              ? (isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0))
+                              : (isDark ? const Color(0xFFD97706) : const Color(0xFFFDE68A)),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Column(
+                            children: [
+                              Text(
+                                "SCORE",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.8,
+                                  color: txtSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              AnimatedCounter(
+                                value: scorePercentage.toDouble(),
+                                suffix: "%",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: txtPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(width: 1, height: 36, color: borderColor),
+                          _buildMetric("CORRECT", "$correctCount / $totalQuestions", txtPrimary, txtSecondary),
+                          Container(width: 1, height: 36, color: borderColor),
+                          _buildMetric("STATUS", isPassed ? "VERIFIED" : "PENDING", txtPrimary, txtSecondary),
                         ],
                       ),
-                      child: Icon(
-                        isPassed ? Icons.verified_rounded : Icons.replay_rounded,
-                        color: Colors.white,
-                        size: 48,
-                      ),
                     ),
-                  ),
-
-                  const SizedBox(height: 22),
-
-                  // Title
-                  Text(
-                    isPassed ? "Assessment Passed! 🎉" : "Assessment Incomplete",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: txtPrimary,
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Candidate Greeting & Subtitle
-                  Text(
-                    isPassed
-                        ? "Congratulations, $candidateName! You have successfully verified your profile."
-                        : "Nice try, $candidateName! An 80% passing score is required to unlock full access.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: txtSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-
-                  const SizedBox(height: 22),
-
-                  // Score Metric Banner
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: isPassed
-                          ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFECFDF5))
-                          : (isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFFFBEB)),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: isPassed
-                            ? (isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0))
-                            : (isDark ? const Color(0xFFD97706) : const Color(0xFFFDE68A)),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildMetric("SCORE", "$scorePercentage%", txtPrimary, txtSecondary),
-                        Container(width: 1, height: 36, color: borderColor),
-                        _buildMetric("CORRECT", "$correctCount / $totalQuestions", txtPrimary, txtSecondary),
-                        Container(width: 1, height: 36, color: borderColor),
-                        _buildMetric("STATUS", isPassed ? "VERIFIED" : "PENDING", txtPrimary, txtSecondary),
-                      ],
-                    ),
-                  ),
 
                   const SizedBox(height: 20),
 
@@ -406,8 +427,9 @@ class AssessmentResultScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildMetric(String label, String value, Color txtPrimary, Color txtSecondary) {
     return Column(

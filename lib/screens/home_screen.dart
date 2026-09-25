@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand_logo.dart';
 import '../widgets/theme_switcher_button.dart';
+import '../widgets/fade_slide_transition.dart';
+import '../widgets/animated_counter.dart';
+import '../widgets/pulsing_badge.dart';
+import '../widgets/interactive_card.dart';
 import 'animated_signin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -11,7 +16,7 @@ class HomeScreen extends StatefulWidget {
 
   const HomeScreen({
     super.key,
-    this.username = "User",
+    this.username = "Vivek Bisht",
     this.isVerified = true,
     this.score = 100,
   });
@@ -24,7 +29,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _bottomNavIndex = 0;
   int _selectedFilterIndex = 0;
-  int _activeStudioTab = 1; // 0: Rounds, 1: Flow, 2: Studio
+
+  // Candidate Details (Defaults to Vivek Bisht, Flutter Developer)
+  String get _candidateName =>
+      (widget.username.isNotEmpty && widget.username != "User") ? widget.username : "Vivek Bisht";
+  final String _candidateRole = "Senior Flutter Developer & Mobile Systems Architect";
+  final String _candidateEmail = "vivek5832017@gmail.com";
+  final String _candidatePhone = "8171152213";
+  final String _candidateFormattedPhone = "+91 8171152213";
 
   final List<String> _filterChips = [
     "All Active Pipelines",
@@ -38,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final verifiedId = "11J-VERIFIED-${(widget.username.hashCode.abs() % 9000 + 1000)}";
+    final verifiedId = "11J-VERIFIED-${(_candidateName.hashCode.abs() % 9000 + 1000)}";
 
     final bgColor = isDark ? const Color(0xFF060919) : const Color(0xFFF6F8FC);
     final cardBg = isDark ? const Color(0xFF0D1527) : Colors.white;
@@ -50,10 +62,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       key: _scaffoldKey,
       backgroundColor: bgColor,
 
-      // Right-Side Hamburger Drawer (Exact match to 11Jobs website layout)
+      // Right-Side Hamburger Drawer (11Jobs official layout)
       endDrawer: _buildHamburgerDrawer(verifiedId, isDark, cardBg, borderColor, txtPrimary, txtSecondary),
 
-      // Top Navigation Bar matching 11Jobs website screenshot
+      // Top Navigation Bar
       appBar: AppBar(
         backgroundColor: isDark ? const Color(0xFF070C1E) : Colors.white,
         elevation: 0.5,
@@ -81,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFF005BFF),
-                      content: const Text("3 enterprise recruiters reviewed your verified assessment scorecard!"),
+                      content: Text("3 enterprise recruiters reviewed $_candidateName's verified scorecard!"),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -102,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ],
           ),
 
-          // Hamburger Menu Button on RIGHT SIDE (Opens Drawer with Dark Mode toggle)
+          // Hamburger Menu Button on RIGHT SIDE
           IconButton(
             key: const Key('hamburgerMenuButton'),
             tooltip: 'Open Menu',
@@ -117,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ],
       ),
 
-      // Bottom Navigation Bar (11Jobs 5-tab style)
+      // Bottom Navigation Bar (5-tab responsive navigation with smooth active indicator)
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF070C1E) : Colors.white,
@@ -136,56 +148,438 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.dashboard_rounded, "Dashboard", isDark),
-                _buildNavItem(1, Icons.alt_route_rounded, "Pipelines", isDark),
-                _buildNavItem(2, Icons.work_outline_rounded, "Opportunities", isDark),
-                _buildNavItem(3, Icons.hub_outlined, "MCP & Tools", isDark),
-                _buildNavItem(4, Icons.person_outline_rounded, "Profile", isDark),
+                Expanded(child: _buildNavItem(0, Icons.dashboard_rounded, "Dashboard", isDark)),
+                Expanded(child: _buildNavItem(1, Icons.alt_route_rounded, "Pipelines", isDark)),
+                Expanded(child: _buildNavItem(2, Icons.work_outline_rounded, "Jobs", isDark)),
+                Expanded(child: _buildNavItem(3, Icons.hub_outlined, "MCP", isDark)),
+                Expanded(child: _buildNavItem(4, Icons.person_outline_rounded, "Profile", isDark)),
               ],
             ),
           ),
         ),
       ),
 
-      // Body Content (100% Authentic 11Jobs Platform Design)
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+      // Dynamic Tab Body Content with Animated Transition
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 260),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.0, 0.02),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: _buildCurrentTabBody(verifiedId, isDark, cardBg, borderColor, txtPrimary, txtSecondary),
+      ),
+    );
+  }
+
+  Widget _buildCurrentTabBody(
+    String verifiedId,
+    bool isDark,
+    Color cardBg,
+    Color borderColor,
+    Color txtPrimary,
+    Color txtSecondary,
+  ) {
+    switch (_bottomNavIndex) {
+      case 1:
+        return _buildPipelinesTab(isDark, cardBg, borderColor, txtPrimary, txtSecondary);
+      case 2:
+        return _buildOpportunitiesTab(isDark, cardBg, borderColor, txtPrimary, txtSecondary);
+      case 3:
+        return _buildMcpToolsTab(isDark, cardBg, borderColor, txtPrimary, txtSecondary);
+      case 4:
+        return _buildProfileTab(verifiedId, isDark, cardBg, borderColor, txtPrimary, txtSecondary);
+      case 0:
+      default:
+        return _buildDashboardTab(verifiedId, isDark, cardBg, borderColor, txtPrimary, txtSecondary);
+    }
+  }
+
+  // ==========================================
+  // TAB 0: 11JOBS MAIN DASHBOARD
+  // ==========================================
+  Widget _buildDashboardTab(
+    String verifiedId,
+    bool isDark,
+    Color cardBg,
+    Color borderColor,
+    Color txtPrimary,
+    Color txtSecondary,
+  ) {
+    return SingleChildScrollView(
+      key: const ValueKey('dashboardTabBody'),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. Hero Banner with Welcome message and Staggered Entrance
+          FadeSlideTransition(
+            delayMs: 30,
+            child: _build11JobsHeroSection(verifiedId, isDark, cardBg, borderColor, txtPrimary, txtSecondary),
+          ),
+
+          const SizedBox(height: 20),
+
+          // 2. Active Hiring Workflow Pipeline Tracker
+          FadeSlideTransition(
+            delayMs: 100,
+            child: _buildHiringPipelineTracker(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
+          ),
+
+          const SizedBox(height: 22),
+
+          // 3. Platform Capabilities Grid
+          FadeSlideTransition(
+            delayMs: 180,
+            child: _buildPlatformCapabilitiesSection(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
+          ),
+
+          const SizedBox(height: 22),
+
+          // 4. AI-Matched High Priority Opportunities
+          FadeSlideTransition(
+            delayMs: 260,
+            child: _buildOpportunitiesSection(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
+          ),
+
+          const SizedBox(height: 22),
+
+          // 5. Model Context Protocol (MCP) & ATS Integration Card
+          FadeSlideTransition(
+            delayMs: 340,
+            child: _buildMcpIntegrationSection(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
+          ),
+
+          const SizedBox(height: 22),
+
+          // 6. Live Pipeline Performance Metrics
+          FadeSlideTransition(
+            delayMs: 420,
+            child: _buildPipelineMetricsSection(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
+          ),
+
+          const SizedBox(height: 36),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // TAB 1: PIPELINES (ACTIVE HIRING PIPELINES)
+  // ==========================================
+  Widget _buildPipelinesTab(
+    bool isDark,
+    Color cardBg,
+    Color borderColor,
+    Color txtPrimary,
+    Color txtSecondary,
+  ) {
+    return SingleChildScrollView(
+      key: const ValueKey('pipelinesTabBody'),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FadeSlideTransition(
+            delayMs: 30,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Active Hiring Pipelines",
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                        color: txtPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Real-time status of your screening workflows",
+                      style: TextStyle(fontSize: 11.5, color: txtSecondary),
+                    ),
+                  ],
+                ),
+                PulsingBadge(
+                  glowColor: const Color(0xFF10B981),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.bolt_rounded, color: Color(0xFF059669), size: 13),
+                        SizedBox(width: 3),
+                        Text(
+                          "3 ACTIVE",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF059669),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Fast-Track Banner
+          FadeSlideTransition(
+            delayMs: 90,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF16233B) : const Color(0xFFFEF9C3),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? const Color(0xFFFACC15).withValues(alpha: 0.4) : const Color(0xFFFDE047),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, color: Color(0xFFD97706), size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Pipelines are automatically fast-tracked with your verified ${widget.score}% score.",
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFFFACC15) : const Color(0xFF854D0E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Pipeline 1
+          FadeSlideTransition(
+            delayMs: 150,
+            child: _buildActivePipelineCard(
+              company: "TechFlow Systems",
+              role: "Senior Flutter Architect",
+              stage: "Stage 3 of 4: Recruiter Review",
+              statusColor: const Color(0xFF3B82F6),
+              progress: 0.75,
+              actionLabel: "Schedule AI Screener",
+              isDark: isDark,
+              cardBg: cardBg,
+              borderColor: borderColor,
+              txtPrimary: txtPrimary,
+              txtSecondary: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Pipeline 2
+          FadeSlideTransition(
+            delayMs: 220,
+            child: _buildActivePipelineCard(
+              company: "AutoHire AI",
+              role: "Full Stack Workflow Engineer",
+              stage: "Stage 2 of 4: Assessment Verified",
+              statusColor: const Color(0xFF10B981),
+              progress: 0.50,
+              actionLabel: "Nudge Recruiter",
+              isDark: isDark,
+              cardBg: cardBg,
+              borderColor: borderColor,
+              txtPrimary: txtPrimary,
+              txtSecondary: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Pipeline 3
+          FadeSlideTransition(
+            delayMs: 290,
+            child: _buildActivePipelineCard(
+              company: "StreamLine DevTools",
+              role: "Mobile Systems Lead",
+              stage: "Stage 1 of 4: Application Dispatched",
+              statusColor: const Color(0xFFF59E0B),
+              progress: 0.25,
+              actionLabel: "View Application",
+              isDark: isDark,
+              cardBg: cardBg,
+              borderColor: borderColor,
+              txtPrimary: txtPrimary,
+              txtSecondary: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Action: Back to Dashboard
+          FadeSlideTransition(
+            delayMs: 360,
+            child: Center(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _bottomNavIndex = 0;
+                  });
+                },
+                icon: const Icon(Icons.arrow_back_rounded, size: 15),
+                label: const Text("Return to Dashboard"),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primaryBlue,
+                  side: const BorderSide(color: AppTheme.primaryBlue),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivePipelineCard({
+    required String company,
+    required String role,
+    required String stage,
+    required Color statusColor,
+    required double progress,
+    required String actionLabel,
+    required bool isDark,
+    required Color cardBg,
+    required Color borderColor,
+    required Color txtPrimary,
+    required Color txtSecondary,
+  }) {
+    return InteractiveCard(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Hero Banner (Exact 11Jobs Hero Section from screenshot)
-            _build11JobsHeroSection(verifiedId, isDark, cardBg, borderColor, txtPrimary, txtSecondary),
-
-            const SizedBox(height: 20),
-
-            // 2. 11Jobs Active Hiring Workflow Pipeline Tracker
-            _buildHiringPipelineTracker(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
-
-            const SizedBox(height: 22),
-
-            // 3. 11Jobs Platform Capabilities Grid (From 11jobs.in)
-            _buildPlatformCapabilitiesSection(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
-
-            const SizedBox(height: 22),
-
-            // 4. AI-Matched High Priority Opportunities
-            _buildOpportunitiesSection(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
-
-            const SizedBox(height: 22),
-
-            // 5. Model Context Protocol (MCP) & ATS Integration Card
-            _buildMcpIntegrationSection(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
-
-            const SizedBox(height: 22),
-
-            // 6. Live Pipeline Performance Metrics
-            _buildPipelineMetricsSection(isDark, cardBg, borderColor, txtPrimary, txtSecondary),
-
-            const SizedBox(height: 36),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                Text(
+                  role,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: txtPrimary,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "${(progress * 100).toInt()}% Done",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              "$company • $stage",
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11.5, color: txtSecondary),
+            ),
+            const SizedBox(height: 10),
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: progress),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (context, animVal, child) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: animVal,
+                    minHeight: 5,
+                    backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                    valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("$actionLabel: Request sent to hiring team!"),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                  foregroundColor: AppTheme.primaryBlue,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                ),
+                child: Text(
+                  actionLabel,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -193,7 +587,1126 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   // ==========================================
-  // 1. EXACT 11JOBS HERO SECTION (From Screenshot)
+  // TAB 2: OPPORTUNITIES (CURATED MATCHES)
+  // ==========================================
+  Widget _buildOpportunitiesTab(
+    bool isDark,
+    Color cardBg,
+    Color borderColor,
+    Color txtPrimary,
+    Color txtSecondary,
+  ) {
+    return SingleChildScrollView(
+      key: const ValueKey('opportunitiesTabBody'),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FadeSlideTransition(
+            delayMs: 30,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Curated Opportunities",
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                        color: txtPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Matched with $_candidateName's verified Flutter credentials",
+                      style: TextStyle(fontSize: 11.5, color: txtSecondary),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: const Text(
+                    "🔥 98% MATCH",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFB45309),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Filter Chips
+          FadeSlideTransition(
+            delayMs: 90,
+            child: SizedBox(
+              height: 34,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _filterChips.length,
+                separatorBuilder: (context, i) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final isSelected = _selectedFilterIndex == index;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedFilterIndex = index),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppTheme.primaryBlue
+                            : (isDark ? const Color(0xFF0F172A) : Colors.white),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppTheme.primaryBlue
+                              : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                        ),
+                      ),
+                      child: Text(
+                        _filterChips[index],
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                          color: isSelected
+                              ? Colors.white
+                              : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Job 1
+          FadeSlideTransition(
+            delayMs: 150,
+            child: _buildJobCard(
+              title: "Senior Flutter Architect",
+              company: "TechFlow Systems",
+              location: "Remote (Global)",
+              matchScore: 98,
+              salary: "₹24L - ₹36L / yr",
+              type: "Full-Time",
+              tags: ["Flutter", "Dart", "Clean Arch", "CI/CD"],
+              isDark: isDark,
+              cardBg: cardBg,
+              borderColor: borderColor,
+              txtPrimary: txtPrimary,
+              txtSecondary: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Job 2
+          FadeSlideTransition(
+            delayMs: 220,
+            child: _buildJobCard(
+              title: "Lead Mobile Systems Engineer",
+              company: "Nexus Automation Labs",
+              location: "Remote / Bengaluru",
+              matchScore: 95,
+              salary: "₹22L - ₹32L / yr",
+              type: "Full-Time",
+              tags: ["Flutter", "Bloc", "WebSockets", "Offline Sync"],
+              isDark: isDark,
+              cardBg: cardBg,
+              borderColor: borderColor,
+              txtPrimary: txtPrimary,
+              txtSecondary: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Job 3
+          FadeSlideTransition(
+            delayMs: 290,
+            child: _buildJobCard(
+              title: "AI & Workflow Solutions Developer",
+              company: "HyperScale Intelligence",
+              location: "Remote (US/India)",
+              matchScore: 92,
+              salary: "₹26L - ₹40L / yr",
+              type: "Full-Time",
+              tags: ["Flutter", "MCP", "AI Tooling", "REST/GraphQL"],
+              isDark: isDark,
+              cardBg: cardBg,
+              borderColor: borderColor,
+              txtPrimary: txtPrimary,
+              txtSecondary: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // TAB 3: MCP & TOOLS (MODEL CONTEXT PROTOCOL)
+  // ==========================================
+  Widget _buildMcpToolsTab(
+    bool isDark,
+    Color cardBg,
+    Color borderColor,
+    Color txtPrimary,
+    Color txtSecondary,
+  ) {
+    return SingleChildScrollView(
+      key: const ValueKey('mcpToolsTabBody'),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FadeSlideTransition(
+            delayMs: 30,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "MCP & Agent Tooling",
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                        color: txtPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Model Context Protocol integrations & ATS sync",
+                      style: TextStyle(fontSize: 11.5, color: txtSecondary),
+                    ),
+                  ],
+                ),
+                PulsingBadge(
+                  glowColor: const Color(0xFF3B82F6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: const Text(
+                      "MCP v2.4",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1D4ED8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // MCP Server Info Card
+          FadeSlideTransition(
+            delayMs: 90,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: borderColor),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.dns_rounded, color: AppTheme.primaryBlue, size: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "11Jobs Native MCP Server",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w800,
+                                color: txtPrimary,
+                              ),
+                            ),
+                            Text(
+                              "mcp://api.11jobs.com/v1/agents",
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontFamily: 'monospace',
+                                color: txtSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          "CONNECTED",
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF059669),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Connect your AI coding agents, IDEs, and ATS systems directly to 11Jobs to automate screening tests and candidate verification pipelines.",
+                    style: TextStyle(fontSize: 11.5, height: 1.4, color: txtSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          Text(
+            "Registered Tools & Webhooks",
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: txtPrimary),
+          ),
+          const SizedBox(height: 10),
+
+          // Tool 1
+          FadeSlideTransition(
+            delayMs: 150,
+            child: _buildMcpToolRow(
+              icon: Icons.psychology_rounded,
+              name: "creative_assessment_screener",
+              desc: "Dispatches scenario-based interactive assessments",
+              status: "ACTIVE",
+              isDark: isDark,
+              cardBg: cardBg,
+              borderColor: borderColor,
+              txtPrimary: txtPrimary,
+              txtSecondary: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Tool 2
+          FadeSlideTransition(
+            delayMs: 220,
+            child: _buildMcpToolRow(
+              icon: Icons.verified_user_rounded,
+              name: "candidate_scorecard_verifier",
+              desc: "Cryptographically signs assessment results with 100% score validation",
+              status: "ACTIVE",
+              isDark: isDark,
+              cardBg: cardBg,
+              borderColor: borderColor,
+              txtPrimary: txtPrimary,
+              txtSecondary: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Tool 3
+          FadeSlideTransition(
+            delayMs: 290,
+            child: _buildMcpToolRow(
+              icon: Icons.sync_alt_rounded,
+              name: "ats_pipeline_sync_hook",
+              desc: "Real-time bidirectional sync with Greenhouse, Lever, and Workday",
+              status: "READY",
+              isDark: isDark,
+              cardBg: cardBg,
+              borderColor: borderColor,
+              txtPrimary: txtPrimary,
+              txtSecondary: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMcpToolRow({
+    required IconData icon,
+    required String name,
+    required String desc,
+    required String status,
+    required bool isDark,
+    required Color cardBg,
+    required Color borderColor,
+    required Color txtPrimary,
+    required Color txtSecondary,
+  }) {
+    return InteractiveCard(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: AppTheme.primaryBlue, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'monospace',
+                      color: txtPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    desc,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 10.5, color: txtSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                status,
+                style: const TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF059669),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // TAB 4: PROFILE & VERIFIED SCORECARD (VIVEK BISHT)
+  // ==========================================
+  Widget _buildProfileTab(
+    String verifiedId,
+    bool isDark,
+    Color cardBg,
+    Color borderColor,
+    Color txtPrimary,
+    Color txtSecondary,
+  ) {
+    return SingleChildScrollView(
+      key: const ValueKey('profileTabBody'),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. Candidate Hero Card with Animated Gradient Ring
+          FadeSlideTransition(
+            delayMs: 30,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                      : [const Color(0xFF005BFF), const Color(0xFF003CB3)],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF005BFF).withValues(alpha: isDark ? 0.3 : 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Avatar with Animated Glowing Gold/Blue Ring
+                  PulsingBadge(
+                    glowColor: const Color(0xFFFACC15),
+                    maxBlur: 14,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        border: Border.all(color: const Color(0xFFFACC15), width: 3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          _candidateName.length >= 2
+                              ? _candidateName.substring(0, 2).toUpperCase()
+                              : "VB",
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF005BFF),
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Candidate Name
+                  Text(
+                    _candidateName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+
+                  // Role Designation
+                  Text(
+                    _candidateRole,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFBAE6FD),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Verification Badge (Overflow-proof using Wrap)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFACC15),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFACC15).withValues(alpha: 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Wrap(
+                      spacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        Icon(Icons.verified_rounded, color: Color(0xFF0F172A), size: 14),
+                        Text(
+                          "VERIFIED CANDIDATE • 100% SCORE",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 2. Direct Contact Information Card
+          FadeSlideTransition(
+            delayMs: 90,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: borderColor),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      Text(
+                        "Contact Details",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: txtPrimary,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          "AVAILABLE FOR HIRE",
+                          style: TextStyle(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF059669),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Email Row
+                  _buildContactTile(
+                    icon: Icons.email_outlined,
+                    label: "Email Address",
+                    value: _candidateEmail,
+                    actionIcon: Icons.copy_rounded,
+                    actionTooltip: "Copy Email",
+                    onAction: () {
+                      Clipboard.setData(ClipboardData(text: _candidateEmail));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFF005BFF),
+                          content: Text("Copied email '$_candidateEmail' to clipboard!"),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    isDark: isDark,
+                    txtPrimary: txtPrimary,
+                    txtSecondary: txtSecondary,
+                  ),
+
+                  const Divider(height: 18),
+
+                  // Phone Row
+                  _buildContactTile(
+                    icon: Icons.phone_outlined,
+                    label: "Phone / WhatsApp",
+                    value: _candidateFormattedPhone,
+                    actionIcon: Icons.phone_forwarded_rounded,
+                    actionTooltip: "Call / Connect",
+                    onAction: () {
+                      Clipboard.setData(ClipboardData(text: _candidatePhone));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFF10B981),
+                          content: Text("Phone number '$_candidateFormattedPhone' copied!"),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    isDark: isDark,
+                    txtPrimary: txtPrimary,
+                    txtSecondary: txtSecondary,
+                  ),
+
+                  const Divider(height: 18),
+
+                  // Location & Availability Row
+                  _buildContactTile(
+                    icon: Icons.location_on_outlined,
+                    label: "Location & Notice",
+                    value: "India • Immediate Joiner (Remote / Hybrid)",
+                    actionIcon: Icons.check_circle_outline_rounded,
+                    actionTooltip: "Immediate",
+                    onAction: null,
+                    isDark: isDark,
+                    txtPrimary: txtPrimary,
+                    txtSecondary: txtSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 3. Verified Assessment Scorecard Details
+          FadeSlideTransition(
+            delayMs: 160,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: borderColor),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      Text(
+                        "Assessment Breakdown",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: txtPrimary,
+                        ),
+                      ),
+                      Text(
+                        verifiedId,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primaryBlue,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Animated KPI Counters
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMetricTile(
+                          label: "Creative Score",
+                          value: widget.score.toDouble(),
+                          suffix: "%",
+                          color: const Color(0xFF10B981),
+                          isDark: isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildMetricTile(
+                          label: "Accuracy",
+                          value: 100,
+                          suffix: "%",
+                          color: AppTheme.primaryBlue,
+                          isDark: isDark,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildMetricTile(
+                          label: "Percentile",
+                          value: 99.8,
+                          suffix: "%",
+                          color: const Color(0xFFF59E0B),
+                          isDark: isDark,
+                          fractionDigits: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 4. Verified Skill Proficiency Bars
+          FadeSlideTransition(
+            delayMs: 230,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: borderColor),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Verified Technical Proficiencies",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: txtPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildSkillProgressBar(
+                    skill: "Flutter & Dart Architecture",
+                    level: "Expert",
+                    percentage: 1.0,
+                    color: const Color(0xFF005BFF),
+                    isDark: isDark,
+                    txtPrimary: txtPrimary,
+                    txtSecondary: txtSecondary,
+                  ),
+                  const SizedBox(height: 10),
+
+                  _buildSkillProgressBar(
+                    skill: "Cross-Platform UI & Animations (60/120 FPS)",
+                    level: "Expert",
+                    percentage: 0.98,
+                    color: const Color(0xFF10B981),
+                    isDark: isDark,
+                    txtPrimary: txtPrimary,
+                    txtSecondary: txtSecondary,
+                  ),
+                  const SizedBox(height: 10),
+
+                  _buildSkillProgressBar(
+                    skill: "State Management (Bloc / Provider / Riverpod)",
+                    level: "Advanced",
+                    percentage: 0.96,
+                    color: const Color(0xFF8B5CF6),
+                    isDark: isDark,
+                    txtPrimary: txtPrimary,
+                    txtSecondary: txtSecondary,
+                  ),
+                  const SizedBox(height: 10),
+
+                  _buildSkillProgressBar(
+                    skill: "REST, GraphQL & Real-time WebSockets",
+                    level: "Advanced",
+                    percentage: 0.95,
+                    color: const Color(0xFFF59E0B),
+                    isDark: isDark,
+                    txtPrimary: txtPrimary,
+                    txtSecondary: txtSecondary,
+                  ),
+                  const SizedBox(height: 10),
+
+                  _buildSkillProgressBar(
+                    skill: "CI/CD, Fastlane, Google Play & App Store",
+                    level: "Advanced",
+                    percentage: 0.93,
+                    color: const Color(0xFF06B6D4),
+                    isDark: isDark,
+                    txtPrimary: txtPrimary,
+                    txtSecondary: txtSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 5. Contact & Connect Action Buttons
+          FadeSlideTransition(
+            delayMs: 300,
+            child: Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: "$_candidateName: $_candidateEmail | $_candidateFormattedPhone"));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFF005BFF),
+                          content: Text("$_candidateName's complete contact details copied!"),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.send_rounded, size: 16),
+                    label: Text(
+                      "Contact $_candidateName",
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
+                          content: const Text("11Jobs Verified Certificate & Scorecard downloaded."),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.file_download_outlined, size: 16),
+                    label: const Text("Download CV"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: txtPrimary,
+                      side: BorderSide(color: borderColor),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactTile({
+    required IconData icon,
+    required String label,
+    required String value,
+    required IconData actionIcon,
+    required String actionTooltip,
+    required VoidCallback? onAction,
+    required bool isDark,
+    required Color txtPrimary,
+    required Color txtSecondary,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 18, color: AppTheme.primaryBlue),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: txtSecondary),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                value,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: txtPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (onAction != null)
+          IconButton(
+            icon: Icon(actionIcon, size: 17, color: AppTheme.primaryBlue),
+            tooltip: actionTooltip,
+            onPressed: onAction,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMetricTile({
+    required String label,
+    required double value,
+    required String suffix,
+    required Color color,
+    required bool isDark,
+    int fractionDigits = 0,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Column(
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: AnimatedCounter(
+              value: value,
+              suffix: suffix,
+              fractionDigits: fractionDigits,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkillProgressBar({
+    required String skill,
+    required String level,
+    required double percentage,
+    required Color color,
+    required bool isDark,
+    required Color txtPrimary,
+    required Color txtSecondary,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                skill,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: txtPrimary),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "${(percentage * 100).toInt()}% • $level",
+              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: percentage),
+          duration: const Duration(milliseconds: 1000),
+          curve: Curves.easeOutCubic,
+          builder: (context, animVal, child) {
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: animVal,
+                minHeight: 6,
+                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // ==========================================
+  // SECTION: 11JOBS HERO BANNER
   // ==========================================
   Widget _build11JobsHeroSection(
     String verifiedId,
@@ -204,443 +1717,253 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Color txtSecondary,
   ) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 26, 20, 28),
+      margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? [
-                  const Color(0xFF0A1026),
-                  const Color(0xFF060B1E),
-                  const Color(0xFF040714),
-                ]
-              : [
-                  const Color(0xFF005BFF),
-                  const Color(0xFF003CB8),
-                ],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Capsule Pill: "✨ Hiring workflows, on autopilot"
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF131D38) : Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isDark ? const Color(0xFF2563EB).withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.25),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.auto_awesome_rounded, color: Color(0xFF38BDF8), size: 15),
-                const SizedBox(width: 6),
-                Text(
-                  "Hiring workflows, on autopilot",
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFE2E8F0) : Colors.white,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          // Main Headline (From 11jobs.in)
-          RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: const TextStyle(
-                fontSize: 27,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 0.2,
-                height: 1.18,
-              ),
-              children: [
-                const TextSpan(text: "Create your own\n"),
-                const TextSpan(text: "Hiring Workflow\n"),
-                TextSpan(
-                  text: "Built once reuse ",
-                  style: TextStyle(
-                    color: isDark ? const Color(0xFF64748B) : Colors.white.withValues(alpha: 0.75),
-                  ),
-                ),
-                const TextSpan(
-                  text: "forever.",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Subtitle (From 11jobs.in)
-          Text(
-            "11Jobs helps you design candidate workflows, run intelligent quizzes, and move great people through every round — all in one calm, powerful place.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? const Color(0xFF94A3B8) : Colors.white.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w400,
-              height: 1.4,
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          // Verified Candidate Status Banner
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0D172E) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF10B981), Color(0xFF059669)],
-                    ),
-                  ),
-                  child: const Icon(Icons.verified_rounded, color: Colors.white, size: 20),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              "Welcome, ${widget.username}!",
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFECFDF5),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              "VERIFIED CANDIDATE",
-                              style: TextStyle(
-                                fontSize: 9.0,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF059669),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        "Assessment Score: ${widget.score}% • #$verifiedId",
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF38BDF8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          // Primary & Secondary Action Buttons (From 11jobs.in)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Candidate workflow auto-dispatched to matching tech roles!"),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF005BFF),
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  shadowColor: const Color(0xFF005BFF).withValues(alpha: 0.4),
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Start free",
-                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800),
-                    ),
-                    SizedBox(width: 6),
-                    Icon(Icons.arrow_forward_rounded, size: 16),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 14),
-              OutlinedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Loading 11Jobs Workflow Interactive Tour..."),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                    color: isDark ? const Color(0xFF334155) : Colors.white.withValues(alpha: 0.6),
-                  ),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                ),
-                child: const Text(
-                  "Watch demo",
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-          Text(
-            "Free while we're in early access • No credit card required",
-            style: TextStyle(
-              fontSize: 11,
-              color: isDark ? const Color(0xFF64748B) : Colors.white70,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-
-          const SizedBox(height: 22),
-
-          // Interactive 11Jobs Studio Flow Card Preview (From 11jobs.in screenshot)
-          _buildInteractiveFlowCardPreview(isDark),
-        ],
-      ),
-    );
-  }
-
-  // ==========================================
-  // INTERACTIVE WORKFLOW FLOW CARD (From Screenshot)
-  // ==========================================
-  Widget _buildInteractiveFlowCardPreview(bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF080D1E) : const Color(0xFF0F1A30),
-        borderRadius: BorderRadius.circular(18),
+        color: isDark ? const Color(0xFF070C1E) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFF1E3A8A),
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            color: const Color(0xFF005BFF).withValues(alpha: isDark ? 0.2 : 0.08),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
+            spreadRadius: -2,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with 3 colored terminal dots and tabs
-          Row(
+          // Top Badges Row
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              // 3 Colored Dots
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle)),
-              const SizedBox(width: 5),
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFF59E0B), shape: BoxShape.circle)),
-              const SizedBox(width: 5),
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF3B82F6), shape: BoxShape.circle)),
-
-              const SizedBox(width: 10),
-
-              // Title
-              const Expanded(
-                child: Text(
-                  "11Jobs — Operations Manager • Culture fit",
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF94A3B8),
+              PulsingBadge(
+                glowColor: const Color(0xFF10B981),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.verified_rounded, color: Color(0xFF059669), size: 12),
+                      SizedBox(width: 4),
+                      Text(
+                        "VERIFIED CANDIDATE",
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF059669),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-
-              // Tabs: Rounds, Flow, Studio
               Container(
-                padding: const EdgeInsets.all(2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111C35),
+                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildStudioTab(0, "Rounds"),
-                    _buildStudioTab(1, "Flow"),
-                    _buildStudioTab(2, "Studio"),
-                  ],
+                child: Text(
+                  verifiedId,
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w700,
+                    color: txtSecondary,
+                  ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFF1E293B)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Animated Switcher for Tab Content
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _activeStudioTab == 0
-                ? _buildRoundsTabContent()
-                : _activeStudioTab == 1
-                    ? _buildFlowTabContent()
-                    : _buildStudioTabContent(),
+          // Welcome greeting
+          Text(
+            "Welcome, $_candidateName!",
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.primaryBlue,
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // Main Tagline
+          Text(
+            "Hire Smarter.\nScreen Faster.",
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              height: 1.15,
+              letterSpacing: -0.8,
+              color: txtPrimary,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Subtitle
+          Text(
+            "An enterprise hiring platform powered by AI agents, Model Context Protocol (MCP), and interactive screening tests.",
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.45,
+              color: txtSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Hero Metric Badges
+          Row(
+            children: [
+              Expanded(
+                child: _buildHeroMetricCard(
+                  title: "Score",
+                  value: widget.score.toDouble(),
+                  suffix: "%",
+                  icon: Icons.emoji_events_rounded,
+                  color: const Color(0xFF10B981),
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildHeroMetricCard(
+                  title: "Match",
+                  value: 98,
+                  suffix: "%",
+                  icon: Icons.auto_awesome_rounded,
+                  color: AppTheme.primaryBlue,
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildHeroMetricCard(
+                  title: "Pipelines",
+                  value: 3,
+                  suffix: " Active",
+                  icon: Icons.alt_route_rounded,
+                  color: const Color(0xFFF59E0B),
+                  isDark: isDark,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // CTAs
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _bottomNavIndex = 1;
+                    });
+                  },
+                  icon: const Icon(Icons.rocket_launch_rounded, size: 15),
+                  label: const Text("View Pipelines"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      _bottomNavIndex = 4;
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: txtPrimary,
+                    side: BorderSide(color: borderColor),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text("View Profile"),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStudioTab(int index, String label) {
-    final isActive = _activeStudioTab == index;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _activeStudioTab = index;
-        });
-      },
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF1E293B) : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-            color: isActive ? Colors.white : const Color(0xFF64748B),
-          ),
+  Widget _buildHeroMetricCard({
+    required String title,
+    required double value,
+    required String suffix,
+    required IconData icon,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
         ),
       ),
-    );
-  }
-
-  Widget _buildFlowTabContent() {
-    return Row(
-      key: const ValueKey('flowTabContent'),
-      children: [
-        _buildFlowStepBadge("1. Screening Quiz", const Color(0xFF38BDF8)),
-        const Icon(Icons.arrow_forward_rounded, color: Color(0xFF64748B), size: 14),
-        _buildFlowStepBadge("2. AI Interview", const Color(0xFF10B981)),
-        const Icon(Icons.arrow_forward_rounded, color: Color(0xFF64748B), size: 14),
-        _buildFlowStepBadge("3. Offer", const Color(0xFFFACC15)),
-      ],
-    );
-  }
-
-  Widget _buildRoundsTabContent() {
-    return Row(
-      key: const ValueKey('roundsTabContent'),
-      children: [
-        _buildFlowStepBadge("Round 1: MCQ", const Color(0xFF38BDF8)),
-        const Icon(Icons.arrow_forward_rounded, color: Color(0xFF64748B), size: 14),
-        _buildFlowStepBadge("Round 2: Tech Task", const Color(0xFFA855F7)),
-        const Icon(Icons.arrow_forward_rounded, color: Color(0xFF64748B), size: 14),
-        _buildFlowStepBadge("Round 3: Culture Fit", const Color(0xFF10B981)),
-      ],
-    );
-  }
-
-  Widget _buildStudioTabContent() {
-    return Row(
-      key: const ValueKey('studioTabContent'),
-      children: [
-        _buildFlowStepBadge("⚡ Trigger: Apply", const Color(0xFFF59E0B)),
-        const Icon(Icons.arrow_forward_rounded, color: Color(0xFF64748B), size: 14),
-        _buildFlowStepBadge("🤖 AI Scoring Engine", const Color(0xFF005BFF)),
-        const Icon(Icons.arrow_forward_rounded, color: Color(0xFF64748B), size: 14),
-        _buildFlowStepBadge("📨 ATS Sync", const Color(0xFF10B981)),
-      ],
-    );
-  }
-
-  Widget _buildFlowStepBadge(String label, Color color) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 9.5,
-            fontWeight: FontWeight.w700,
-            color: color,
+      child: Column(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: AnimatedCounter(
+              value: value,
+              suffix: suffix,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
           ),
-        ),
+          const SizedBox(height: 1),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   // ==========================================
-  // 2. HIRING WORKFLOW PIPELINE TRACKER
+  // SECTION: HIRING PIPELINE TRACKER
   // ==========================================
   Widget _buildHiringPipelineTracker(
     bool isDark,
@@ -650,8 +1973,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Color txtSecondary,
   ) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 18),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(22),
@@ -667,106 +1990,192 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
             children: [
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.alt_route_rounded, color: AppTheme.primaryBlue, size: 22),
-                  const SizedBox(width: 8),
                   Text(
                     "Hiring Workflow Pipeline",
                     style: TextStyle(
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
                       color: txtPrimary,
                     ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "Senior Flutter Architect • TechFlow Systems",
+                    style: TextStyle(fontSize: 11, color: txtSecondary),
                   ),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+                  color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
-                  "LIVE STATUS",
+                  "STAGE 3/4",
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryBlue,
+                    color: Color(0xFF1D4ED8),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            "Automated progress synchronization across active hiring pipelines",
-            style: TextStyle(fontSize: 12, color: txtSecondary),
-          ),
+
           const SizedBox(height: 16),
-          _buildPipelineStep("1. Profile & Registration", "Completed", true, txtPrimary, isDark),
-          _buildPipelineStep("2. 11Jobs Skill Assessment", "Passed (${widget.score}%)", true, txtPrimary, isDark),
-          _buildPipelineStep("3. Recruiter Pipeline Matching", "Active & Fast-Tracked", true, txtPrimary, isDark),
-          _buildPipelineStep("4. Direct Interview Stage", "Scheduled Soon", false, txtPrimary, isDark),
+
+          // Interactive Pipeline Stages
+          _buildPipelineStep(
+            stepNumber: 1,
+            title: "Application Dispatched",
+            status: "Completed",
+            isDone: true,
+            isCurrent: false,
+            isDark: isDark,
+            txtPrimary: txtPrimary,
+            txtSecondary: txtSecondary,
+          ),
+          _buildPipelineStep(
+            stepNumber: 2,
+            title: "Creative Assessment Verified",
+            status: "Passed (100%)",
+            isDone: true,
+            isCurrent: false,
+            isDark: isDark,
+            txtPrimary: txtPrimary,
+            txtSecondary: txtSecondary,
+          ),
+          _buildPipelineStep(
+            stepNumber: 3,
+            title: "Enterprise Recruiter Review",
+            status: "In Review",
+            isDone: false,
+            isCurrent: true,
+            isDark: isDark,
+            txtPrimary: txtPrimary,
+            txtSecondary: txtSecondary,
+          ),
+          _buildPipelineStep(
+            stepNumber: 4,
+            title: "Final Technical Interview",
+            status: "Upcoming",
+            isDone: false,
+            isCurrent: false,
+            isLast: true,
+            isDark: isDark,
+            txtPrimary: txtPrimary,
+            txtSecondary: txtSecondary,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildPipelineStep(String title, String status, bool isDone, Color txtPrimary, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDone ? const Color(0xFF10B981) : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+  Widget _buildPipelineStep({
+    required int stepNumber,
+    required String title,
+    required String status,
+    required bool isDone,
+    required bool isCurrent,
+    bool isLast = false,
+    required bool isDark,
+    required Color txtPrimary,
+    required Color txtSecondary,
+  }) {
+    Color stepColor = isDone
+        ? const Color(0xFF10B981)
+        : (isCurrent ? AppTheme.primaryBlue : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)));
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDone || isCurrent ? stepColor : Colors.transparent,
+                border: Border.all(color: stepColor, width: 2),
+              ),
+              child: Center(
+                child: isDone
+                    ? const Icon(Icons.check_rounded, size: 13, color: Colors.white)
+                    : Text(
+                        "$stepNumber",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: isCurrent ? Colors.white : stepColor,
+                        ),
+                      ),
+              ),
             ),
-            child: Icon(
-              isDone ? Icons.check : Icons.circle,
-              color: isDone ? Colors.white : const Color(0xFF94A3B8),
-              size: 14,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+            if (!isLast)
+              Container(
+                width: 2,
+                height: 24,
+                color: isDone ? const Color(0xFF10B981) : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+              ),
+          ],
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 3,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 2),
             child: Text(
               title,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: isDone ? FontWeight.w700 : FontWeight.w500,
-                color: txtPrimary,
+                fontSize: 12,
+                fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
+                color: isCurrent ? txtPrimary : (isDone ? txtPrimary : txtSecondary),
               ),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          flex: 2,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: isDone ? const Color(0xFFECFDF5) : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-              borderRadius: BorderRadius.circular(8),
+              color: isDone
+                  ? const Color(0xFFECFDF5)
+                  : (isCurrent ? const Color(0xFFEFF6FF) : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9))),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               status,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: isDone ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+                fontSize: 9.5,
+                fontWeight: FontWeight.w800,
+                color: isDone
+                    ? const Color(0xFF059669)
+                    : (isCurrent ? const Color(0xFF1D4ED8) : txtSecondary),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   // ==========================================
-  // 3. 11JOBS PLATFORM CAPABILITIES
+  // SECTION: PLATFORM CAPABILITIES GRID
   // ==========================================
   Widget _buildPlatformCapabilitiesSection(
     bool isDark,
@@ -776,76 +2185,47 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Color txtSecondary,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Why 11Jobs Automates Faster",
+            "Platform Architecture",
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
               color: txtPrimary,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            "End-to-end recruitment architecture powered by AI scoring & custom stages",
-            style: TextStyle(fontSize: 12.5, color: txtSecondary),
-          ),
-          const SizedBox(height: 14),
-
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.15,
+          const SizedBox(height: 12),
+          Row(
             children: [
-              _buildFeatureCard(
-                icon: Icons.bolt_rounded,
-                title: "Instant Scoring",
-                desc: "Objective skill benchmark with zero recruiter lag.",
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                iconColor: AppTheme.primaryBlue,
-                cardBg: cardBg,
-                borderColor: borderColor,
-                txtPrimary: txtPrimary,
-                txtSecondary: txtSecondary,
+              Expanded(
+                child: _buildCapabilityCard(
+                  icon: Icons.psychology_rounded,
+                  title: "Agent Screener",
+                  desc: "Interactive situational testing with automatic validation.",
+                  color: const Color(0xFF005BFF),
+                  isDark: isDark,
+                  cardBg: cardBg,
+                  borderColor: borderColor,
+                  txtPrimary: txtPrimary,
+                  txtSecondary: txtSecondary,
+                ),
               ),
-              _buildFeatureCard(
-                icon: Icons.hub_rounded,
-                title: "Native MCP Ready",
-                desc: "Connect AI agents, webhooks & ATS pipelines.",
-                color: isDark ? const Color(0xFF132E27) : const Color(0xFFECFDF5),
-                iconColor: const Color(0xFF10B981),
-                cardBg: cardBg,
-                borderColor: borderColor,
-                txtPrimary: txtPrimary,
-                txtSecondary: txtSecondary,
-              ),
-              _buildFeatureCard(
-                icon: Icons.schema_outlined,
-                title: "Custom Rounds",
-                desc: "Design MCQ, coding & behavioral flow stages.",
-                color: isDark ? const Color(0xFF2C1B4D) : const Color(0xFFFAF5FF),
-                iconColor: const Color(0xFFA855F7),
-                cardBg: cardBg,
-                borderColor: borderColor,
-                txtPrimary: txtPrimary,
-                txtSecondary: txtSecondary,
-              ),
-              _buildFeatureCard(
-                icon: Icons.speed_rounded,
-                title: "10x Shortlisting",
-                desc: "Filter 1000s of candidates automatically.",
-                color: isDark ? const Color(0xFF33200B) : const Color(0xFFFFFBEB),
-                iconColor: const Color(0xFFF59E0B),
-                cardBg: cardBg,
-                borderColor: borderColor,
-                txtPrimary: txtPrimary,
-                txtSecondary: txtSecondary,
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildCapabilityCard(
+                  icon: Icons.bolt_rounded,
+                  title: "MCP Webhooks",
+                  desc: "Live ATS synchronization with enterprise hiring portals.",
+                  color: const Color(0xFF10B981),
+                  isDark: isDark,
+                  cardBg: cardBg,
+                  borderColor: borderColor,
+                  txtPrimary: txtPrimary,
+                  txtSecondary: txtSecondary,
+                ),
               ),
             ],
           ),
@@ -854,62 +2234,68 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildFeatureCard({
+  Widget _buildCapabilityCard({
     required IconData icon,
     required String title,
     required String desc,
     required Color color,
-    required Color iconColor,
+    required bool isDark,
     required Color cardBg,
     required Color borderColor,
     required Color txtPrimary,
     required Color txtSecondary,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(10),
+    return InteractiveCard(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const Spacer(),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-              color: txtPrimary,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 18),
             ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            desc,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              color: txtSecondary,
-              height: 1.3,
+            const SizedBox(height: 10),
+            Text(
+              title,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: txtPrimary,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              desc,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 10.5, height: 1.35, color: txtSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ==========================================
-  // 4. AI-MATCHED OPPORTUNITIES
+  // SECTION: CURATED OPPORTUNITIES (DASHBOARD PREVIEW)
   // ==========================================
   Widget _buildOpportunitiesSection(
     bool isDark,
@@ -919,101 +2305,45 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Color txtSecondary,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
             children: [
               Text(
-                "Fast-Track Opportunities",
+                "Curated Matches",
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
                   color: txtPrimary,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+              GestureDetector(
+                onTap: () => setState(() => _bottomNavIndex = 2),
                 child: const Text(
-                  "HIGH MATCH",
+                  "View All (12)",
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF059669),
+                    color: AppTheme.primaryBlue,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            "Direct recruitment pipelines based on your verified assessment score",
-            style: TextStyle(fontSize: 12.5, color: txtSecondary),
-          ),
           const SizedBox(height: 12),
-
-          // Filter Chips Scroll
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: List.generate(_filterChips.length, (index) {
-                final isSelected = _selectedFilterIndex == index;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(_filterChips[index]),
-                    selected: isSelected,
-                    selectedColor: AppTheme.primaryBlue,
-                    backgroundColor: isDark ? const Color(0xFF0D172E) : Colors.white,
-                    labelStyle: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? Colors.white : txtSecondary,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? AppTheme.primaryBlue : borderColor,
-                    ),
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedFilterIndex = index;
-                      });
-                    },
-                  ),
-                );
-              }),
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
           _buildJobCard(
-            title: "Senior Flutter & Mobile Architect",
+            title: "Senior Flutter Architect",
             company: "TechFlow Systems",
             location: "Remote (Global)",
-            stipend: "\$90,000 - \$120,000 / yr",
-            matchRate: 98,
-            tags: ["Flutter", "Dart", "Clean Architecture", "CI/CD"],
-            isDark: isDark,
-            cardBg: cardBg,
-            borderColor: borderColor,
-            txtPrimary: txtPrimary,
-            txtSecondary: txtSecondary,
-          ),
-          const SizedBox(height: 12),
-          _buildJobCard(
-            title: "Full Stack AI Workflow Engineer",
-            company: "AutoHire AI",
-            location: "Bengaluru • Hybrid",
-            stipend: "₹18 - 25 LPA",
-            matchRate: 94,
-            tags: ["Python", "MCP", "FastAPI", "React"],
+            matchScore: 98,
+            salary: "₹24L - ₹36L / yr",
+            type: "Full-Time",
+            tags: ["Flutter", "Dart", "Clean Arch", "CI/CD"],
             isDark: isDark,
             cardBg: cardBg,
             borderColor: borderColor,
@@ -1029,8 +2359,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     required String title,
     required String company,
     required String location,
-    required String stipend,
-    required int matchRate,
+    required int matchScore,
+    required String salary,
+    required String type,
     required List<String> tags,
     required bool isDark,
     required Color cardBg,
@@ -1038,56 +2369,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     required Color txtPrimary,
     required Color txtSecondary,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFDBEAFE),
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    company.substring(0, 1),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryBlue,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+    return InteractiveCard(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 14.5,
                         fontWeight: FontWeight.w800,
                         color: txtPrimary,
                       ),
@@ -1095,103 +2407,95 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     const SizedBox(height: 2),
                     Text(
                       "$company • $location",
-                      style: TextStyle(fontSize: 12, color: txtSecondary),
+                      style: TextStyle(fontSize: 11.5, color: txtSecondary),
                     ),
                   ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  "$matchRate% MATCH",
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF059669),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const Icon(Icons.payments_outlined, size: 16, color: Color(0xFF10B981)),
-              const SizedBox(width: 6),
-              Text(
-                stipend,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF10B981),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: tags.map((t) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  t,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: txtSecondary,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: const Color(0xFF059669),
-                    behavior: SnackBarBehavior.floating,
-                    content: Row(
-                      children: [
-                        const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
-                        const SizedBox(width: 8),
-                        Text("Applied to $title via Fast-Track Pipeline!"),
-                      ],
+                  child: Text(
+                    "🔥 $matchScore% Match",
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFB45309),
                     ),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(vertical: 11),
-              ),
-              child: const Text(
-                "Apply via 1-Click Pipeline",
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-              ),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: tags
+                  .map(
+                    (tag) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        tag,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: txtSecondary,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Text(
+                  "$salary • $type",
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: txtPrimary,
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: const Color(0xFF005BFF),
+                        content: Text("Application submitted for $title! Fast-tracked with verified score."),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text("1-Click Apply", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ==========================================
-  // 5. MCP INTEGRATION SECTION
+  // SECTION: MCP INTEGRATION CARD
   // ==========================================
   Widget _buildMcpIntegrationSection(
     bool isDark,
@@ -1201,53 +2505,54 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Color txtSecondary,
   ) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 18),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: isDark ? const Color(0xFF0D1527) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: borderColor),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.hub_outlined, color: AppTheme.primaryBlue, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Model Context Protocol (MCP)",
-                      style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: txtPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "Connect AI Agents & Recruiters in real time",
-                      style: TextStyle(fontSize: 11.5, color: txtSecondary),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.hub_rounded, color: AppTheme.primaryBlue, size: 24),
           ),
-          const SizedBox(height: 14),
-          Text(
-            "11Jobs features native MCP and webhook architecture to push candidate test evaluation data straight into Greenhouse, Lever, Workday, and internal HR pipelines.",
-            style: TextStyle(fontSize: 12.5, color: txtSecondary, height: 1.45),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Model Context Protocol (MCP)",
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: txtPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "Connected to enterprise ATS & AI screening engines.",
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, color: txtSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: () => setState(() => _bottomNavIndex = 3),
+            style: TextButton.styleFrom(
+              foregroundColor: AppTheme.primaryBlue,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            ),
+            child: const Text("Manage", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -1255,7 +2560,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   // ==========================================
-  // 6. PIPELINE PERFORMANCE METRICS
+  // SECTION: PIPELINE METRICS
   // ==========================================
   Widget _buildPipelineMetricsSection(
     bool isDark,
@@ -1264,29 +2569,171 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Color txtPrimary,
     Color txtSecondary,
   ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Platform Performance",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: txtPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricItem(
+                  value: 99.4,
+                  suffix: "%",
+                  fractionDigits: 1,
+                  label: "Platform SLA",
+                  color: const Color(0xFF10B981),
+                  isDark: isDark,
+                  cardBg: cardBg,
+                  borderColor: borderColor,
+                  txtSecondary: txtSecondary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricItem(
+                  value: 4.8,
+                  suffix: "x",
+                  fractionDigits: 1,
+                  label: "Hiring Speedup",
+                  color: AppTheme.primaryBlue,
+                  isDark: isDark,
+                  cardBg: cardBg,
+                  borderColor: borderColor,
+                  txtSecondary: txtSecondary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMetricItem(
+                  value: 99.8,
+                  suffix: "%",
+                  fractionDigits: 1,
+                  label: "Verification Accuracy",
+                  color: const Color(0xFFF59E0B),
+                  isDark: isDark,
+                  cardBg: cardBg,
+                  borderColor: borderColor,
+                  txtSecondary: txtSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricItem({
+    required double value,
+    required String suffix,
+    required String label,
+    required Color color,
+    required bool isDark,
+    required Color cardBg,
+    required Color borderColor,
+    required Color txtSecondary,
+    int fractionDigits = 0,
+  }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 18),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          _MetricItem("100%", "ASSESSMENT", txtPrimary, txtSecondary),
-          Container(width: 1, height: 38, color: borderColor),
-          _MetricItem("12", "PIPELINES", txtPrimary, txtSecondary),
-          Container(width: 1, height: 38, color: borderColor),
-          _MetricItem("1-Day", "AVG RESPONSE", txtPrimary, txtSecondary),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: AnimatedCounter(
+              value: value,
+              suffix: suffix,
+              fractionDigits: fractionDigits,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, color: txtSecondary),
+            ),
+          ),
         ],
       ),
     );
   }
 
   // ==========================================
-  // 7. RIGHT HAMBURGER DRAWER (11Jobs Platform Style)
+  // NAVIGATION BAR ITEM BUILDER
+  // ==========================================
+  Widget _buildNavItem(int index, IconData icon, String label, bool isDark) {
+    final isSelected = _bottomNavIndex == index;
+    return GestureDetector(
+      key: Key('bottomNavItem_$index'),
+      onTap: () {
+        setState(() {
+          _bottomNavIndex = index;
+        });
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppTheme.primaryBlue.withValues(alpha: isDark ? 0.25 : 0.12)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              size: 22,
+              color: isSelected
+                  ? AppTheme.primaryBlue
+                  : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+            ),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                color: isSelected
+                    ? AppTheme.primaryBlue
+                    : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // RIGHT HAMBURGER DRAWER (11JOBS OFFICIAL MENU)
   // ==========================================
   Widget _buildHamburgerDrawer(
     String verifiedId,
@@ -1300,237 +2747,176 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       backgroundColor: isDark ? const Color(0xFF070C1E) : Colors.white,
       child: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Drawer Header with Verified Profile Info & Close Button
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 20, 16, 20),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: borderColor)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Drawer Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 16, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const BrandLogo(height: 24),
-                      IconButton(
-                        icon: Icon(Icons.close_rounded, color: txtPrimary, size: 22),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            colors: [AppTheme.primaryBlue, Color(0xFF38BDF8)],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            widget.username.isNotEmpty ? widget.username[0].toUpperCase() : "U",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.username,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: txtPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "#$verifiedId",
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: txtSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFA7F3D0)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.verified_rounded, color: Color(0xFF059669), size: 16),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            "Assessment Score: ${widget.score}% Verified",
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF059669),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  const BrandLogo(height: 22),
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, color: txtPrimary, size: 22),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
 
-            // Navigation Menu Items
+            const Divider(height: 1),
+
+            // Candidate Summary Card
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: borderColor),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.primaryBlue,
+                      ),
+                      child: Center(
+                        child: Text(
+                          _candidateName.length >= 2
+                              ? _candidateName.substring(0, 2).toUpperCase()
+                              : "VB",
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _candidateName,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: txtPrimary),
+                          ),
+                          Text(
+                            _candidateEmail,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 10.5, color: txtSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Navigation Items
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 children: [
-                  // Theme Mode Switcher Card in Drawer
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F1A30) : const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF182744) : Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: ElevenJobsFlowerIcon(
-                            size: 20,
-                            color: isDark ? const Color(0xFFFACC15) : AppTheme.primaryBlue,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Dark Mode",
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: txtPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isDark ? "11Jobs Midnight Navy" : "Clean White Light",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: txtSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch(
-                          key: const Key('drawerThemeSwitch'),
-                          value: isDark,
-                          activeThumbColor: const Color(0xFFFACC15),
-                          activeTrackColor: const Color(0xFF1E293B),
-                          onChanged: (value) {
-                            AppTheme.toggleTheme();
-                          },
-                        ),
-                      ],
-                    ),
+                  _buildDrawerItem(
+                    icon: Icons.dashboard_rounded,
+                    title: "Dashboard",
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      setState(() => _bottomNavIndex = 0);
+                    },
+                    txtPrimary: txtPrimary,
                   ),
-
-                  Divider(height: 16, color: borderColor),
-
-                  _buildDrawerSectionHeader("WORKFLOW PIPELINES"),
-                  _buildDrawerItem(Icons.dashboard_outlined, "Overview Dashboard", true, txtPrimary),
-                  _buildDrawerItem(Icons.alt_route_rounded, "Active Hiring Pipelines", false, txtPrimary),
-                  _buildDrawerItem(Icons.verified_outlined, "Assessment Scorecard & Badges", false, txtPrimary),
-                  _buildDrawerItem(Icons.smart_toy_outlined, "AI Technical Screenings", false, txtPrimary),
-
-                  Divider(height: 24, color: borderColor),
-
-                  _buildDrawerSectionHeader("OPPORTUNITIES & ROLES"),
-                  _buildDrawerItem(Icons.work_outline_rounded, "Matched Tech Roles", false, txtPrimary),
-                  _buildDrawerItem(Icons.bolt_rounded, "Fast-Track Pipeline Openings", false, txtPrimary),
-                  _buildDrawerItem(Icons.language_rounded, "Remote Global Roles", false, txtPrimary),
-
-                  Divider(height: 24, color: borderColor),
-
-                  _buildDrawerSectionHeader("TOOLS & INTEGRATIONS"),
-                  _buildDrawerItem(Icons.hub_outlined, "MCP & ATS Connectors", false, txtPrimary),
-                  _buildDrawerItem(Icons.calendar_month_outlined, "Interview Dispatcher", false, txtPrimary),
-                  _buildDrawerItem(Icons.bar_chart_rounded, "Skill Benchmark Analytics", false, txtPrimary),
-
-                  Divider(height: 24, color: borderColor),
-
-                  _buildDrawerSectionHeader("HELP & COMPLIANCE"),
-                  _buildDrawerItem(Icons.help_outline_rounded, "11Jobs Knowledge Base", false, txtPrimary),
-                  _buildDrawerItem(Icons.chat_bubble_outline_rounded, "Recruitment Support", false, txtPrimary),
-                  _buildDrawerItem(Icons.security_outlined, "Security & Privacy", false, txtPrimary),
+                  _buildDrawerItem(
+                    icon: Icons.alt_route_rounded,
+                    title: "Active Pipelines",
+                    badge: "3 Active",
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      setState(() => _bottomNavIndex = 1);
+                    },
+                    txtPrimary: txtPrimary,
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.work_outline_rounded,
+                    title: "Job Opportunities",
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      setState(() => _bottomNavIndex = 2);
+                    },
+                    txtPrimary: txtPrimary,
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.hub_outlined,
+                    title: "MCP & Tools",
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      setState(() => _bottomNavIndex = 3);
+                    },
+                    txtPrimary: txtPrimary,
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.person_outline_rounded,
+                    title: "$_candidateName's Profile",
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      setState(() => _bottomNavIndex = 4);
+                    },
+                    txtPrimary: txtPrimary,
+                  ),
+                  const Divider(height: 20),
+                  _buildDrawerItem(
+                    icon: Icons.business_center_outlined,
+                    title: "For Employers",
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _showDrawerInfoModal("For Employers", "Deploy automated AI screening tests, custom coding sandboxes, and integrate with your existing ATS workflow in minutes.");
+                    },
+                    txtPrimary: txtPrimary,
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.payments_outlined,
+                    title: "Pricing Plans",
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _showDrawerInfoModal("Pricing Plans", "• Starter: Free for verified developers\n• Team: \$199/month for 50 active screens\n• Enterprise: Custom dedicated MCP nodes.");
+                    },
+                    txtPrimary: txtPrimary,
+                  ),
                 ],
               ),
             ),
 
-            // Logout Action Button at Bottom
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: borderColor)),
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _handleLogout(),
-                  icon: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 18),
-                  label: const Text(
-                    "Logout",
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFEF4444),
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFFECACA)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
+            // Theme Toggle Card in Drawer
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: DrawerThemeToggleCard(),
+            ),
+
+            // Sign Out Option
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+              child: OutlinedButton.icon(
+                key: const Key('drawerLogoutButton'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const AnimatedSignInScreen()),
+                  );
+                },
+                icon: const Icon(Icons.logout_rounded, size: 16, color: Color(0xFFEF4444)),
+                label: const Text(
+                  "Logout",
+                  style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w700),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFEF4444)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                 ),
               ),
             ),
@@ -1540,123 +2926,104 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildDrawerSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 10.5,
-          fontWeight: FontWeight.w800,
-          color: Color(0xFF64748B),
-          letterSpacing: 0.8,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(IconData icon, String title, bool isSelected, Color txtPrimary) {
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    String? badge,
+    required VoidCallback onTap,
+    required Color txtPrimary,
+  }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: isSelected ? AppTheme.primaryBlue : txtPrimary,
-        size: 21,
-      ),
+      leading: Icon(icon, color: txtPrimary, size: 20),
       title: Text(
         title,
-        style: TextStyle(
-          fontSize: 13.5,
-          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-          color: isSelected ? AppTheme.primaryBlue : txtPrimary,
-        ),
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: txtPrimary),
       ),
-      dense: true,
-      selected: isSelected,
-      selectedTileColor: const Color(0xFF005BFF).withValues(alpha: 0.12),
-      onTap: () {
-        Navigator.pop(context); // Close drawer
-      },
-    );
-  }
-
-  Widget _buildNavItem(int index, IconData icon, String label, bool isDark) {
-    final isSelected = _bottomNavIndex == index;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _bottomNavIndex = index;
-        });
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isSelected ? AppTheme.primaryBlue : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? AppTheme.primaryBlue : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+      trailing: badge != null
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(6),
               ),
-            ),
-          ],
-        ),
-      ),
+              child: Text(
+                badge,
+                style: const TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF059669),
+                ),
+              ),
+            )
+          : null,
+      onTap: onTap,
+      dense: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 
-  void _handleLogout() {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const AnimatedSignInScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
+  void _showDrawerInfoModal(String title, String content) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-    );
-  }
-}
-
-class _MetricItem extends StatelessWidget {
-  final String value;
-  final String label;
-  final Color txtPrimary;
-  final Color txtSecondary;
-
-  const _MetricItem(this.value, this.label, this.txtPrimary, this.txtSecondary);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            color: txtPrimary,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                content,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  height: 1.5,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text("Got It"),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: txtSecondary,
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

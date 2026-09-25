@@ -5,7 +5,6 @@ import '../widgets/animated_sign_in_button.dart';
 import '../widgets/brand_logo.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/otp_input_field.dart';
-import '../widgets/theme_switcher_button.dart';
 import 'assessment_screen.dart';
 import 'home_screen.dart';
 
@@ -69,6 +68,16 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
 
   // Registered Accounts Database (In-Memory Session Store)
   static final List<UserAccount> _registeredAccounts = [
+    UserAccount(
+      firstName: "Vivek",
+      lastName: "Bisht",
+      email: "vivek5832017@gmail.com",
+      phone: "8171152213",
+      countryCode: "+91",
+      password: "Password123",
+      isVerified: true,
+      assessmentScore: 100,
+    ),
     UserAccount(
       firstName: "Alex",
       lastName: "Developer",
