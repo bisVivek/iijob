@@ -9,7 +9,7 @@ import 'package:_11jobs/widgets/brand_logo.dart';
 void main() {
   testWidgets('Full User Journey: Registration -> OTP -> Creative Assessment Test (Pass Flow) -> Verified Dashboard', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 2.0;
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
@@ -97,37 +97,47 @@ void main() {
     expect(find.text('11Jobs Assessment Test'), findsOneWidget);
     expect(find.textContaining('Question 1 of 5'), findsOneWidget);
 
-    // Answer Question 1 (Correct: Option 1)
+    // Answer Question 1 (Correct: Option 1 -> B)
+    await tester.ensureVisible(find.byKey(const Key('optionCard_1')));
     await tester.tap(find.byKey(const Key('optionCard_1')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
     await tester.tap(find.byKey(const Key('nextQuestionButton')));
     await tester.pumpAndSettle();
 
-    // Answer Question 2 (Correct: Option 1)
+    // Answer Question 2 (Correct: Option 0 -> A)
     expect(find.textContaining('Question 2 of 5'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('optionCard_1')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('nextQuestionButton')));
-    await tester.pumpAndSettle();
-
-    // Answer Question 3 (Correct: Option 0)
-    expect(find.textContaining('Question 3 of 5'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('optionCard_0')));
     await tester.tap(find.byKey(const Key('optionCard_0')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
     await tester.tap(find.byKey(const Key('nextQuestionButton')));
     await tester.pumpAndSettle();
 
-    // Answer Question 4 (Correct: Option 1)
+    // Answer Question 3 (Correct: Option 0 -> A)
+    expect(find.textContaining('Question 3 of 5'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('optionCard_0')));
+    await tester.tap(find.byKey(const Key('optionCard_0')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
+    await tester.tap(find.byKey(const Key('nextQuestionButton')));
+    await tester.pumpAndSettle();
+
+    // Answer Question 4 (Correct: Option 1 -> B)
     expect(find.textContaining('Question 4 of 5'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('optionCard_1')));
     await tester.tap(find.byKey(const Key('optionCard_1')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
     await tester.tap(find.byKey(const Key('nextQuestionButton')));
     await tester.pumpAndSettle();
 
-    // Answer Question 5 (Correct: Option 1)
+    // Answer Question 5 (Correct: Option 1 -> B)
     expect(find.textContaining('Question 5 of 5'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('optionCard_1')));
     await tester.tap(find.byKey(const Key('optionCard_1')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
     await tester.tap(find.byKey(const Key('nextQuestionButton')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
@@ -141,6 +151,7 @@ void main() {
     expect(find.textContaining('#11J-VERIFIED'), findsOneWidget);
 
     // 6. Enter Dashboard
+    await tester.ensureVisible(find.byKey(const Key('enterDashboardButton')));
     await tester.tap(find.byKey(const Key('enterDashboardButton')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 700));
@@ -181,7 +192,7 @@ void main() {
 
   testWidgets('Assessment Fail Flow: Retake Test & Retry', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 2.0;
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
@@ -251,8 +262,10 @@ void main() {
 
     // Answer incorrectly (select option 3 for all questions)
     for (int i = 0; i < 5; i++) {
+      await tester.ensureVisible(find.byKey(const Key('optionCard_3')));
       await tester.tap(find.byKey(const Key('optionCard_3')));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
       await tester.tap(find.byKey(const Key('nextQuestionButton')));
       await tester.pumpAndSettle();
     }
@@ -264,6 +277,7 @@ void main() {
     expect(find.byKey(const Key('retakeAssessmentButton')), findsOneWidget);
 
     // Tap Retake Assessment
+    await tester.ensureVisible(find.byKey(const Key('retakeAssessmentButton')));
     await tester.tap(find.byKey(const Key('retakeAssessmentButton')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));

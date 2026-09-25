@@ -23,83 +23,83 @@ class AssessmentBank {
     return const [
       AssessmentQuestion(
         id: "q1",
-        category: "Hiring Automation",
-        iconEmoji: "🚀",
+        category: "Concurrency & Stock Handling",
+        iconEmoji: "⚡",
         question:
-            "In a modern hiring platform like 11Jobs, what is the fastest way to evaluate candidates fairly and efficiently?",
+            "Imagine an e-commerce app has only 4 items left in stock.\n\nAt almost the same time:\n👤 User A adds 4 items to the cart.\n👤 User B also adds 4 items to the cart.\nBoth users click Checkout at almost the same time.\n\nAs an App Developer, where should the final stock validation and concurrency handling happen?",
         options: [
-          "Manual manual resume printing and guesswork",
-          "Automated skill assessments with instant pipeline scoring",
-          "Waiting for candidates to call the recruiter",
-          "Deleting half the applicant list randomly",
+          "Only on the frontend, because the app already knows the available stock.",
+          "On the backend/database using proper transaction or atomic stock handling; the frontend should only perform basic UX-level validation.",
+          "No validation is required because both users saw 4 items available.",
+          "Disable the Checkout button for everyone when stock is low.",
         ],
         correctIndex: 1,
         explanation:
-            "Automated screening pipelines and interactive assessments evaluate skills objectively and instantly.",
+            "Concurrency control and inventory updates must be validated server-side through atomic transactions to prevent race conditions and over-selling.",
       ),
       AssessmentQuestion(
         id: "q2",
-        category: "Logic & Problem Solving",
-        iconEmoji: "💡",
+        category: "The Offline User",
+        iconEmoji: "🌐",
         question:
-            "A critical feature has a bug before a release. What is the most professional engineering approach?",
+            "A user opens the Products screen, but their internet connection is unavailable.\n\nWhat would provide the best user experience?",
         options: [
-          "Panic and delete the entire repository",
-          "Identify root causes with logs, isolate the bug, and apply a targeted hotfix",
-          "Push untested code straight to production and hope for the best",
-          "Ignore the issue and blame the network",
-        ],
-        correctIndex: 1,
-        explanation:
-            "Systematic root cause analysis and isolated testing ensure quick, reliable resolution.",
-      ),
-      AssessmentQuestion(
-        id: "q3",
-        category: "UI & UX Excellence",
-        iconEmoji: "📱",
-        question:
-            "Why should interactive forms always provide instant, inline field validation rather than failing silently?",
-        options: [
-          "It guides candidates clearly and prevents frustration with immediate helpful feedback",
-          "It takes up more screen space",
-          "It makes the application look unnecessarily complicated",
-          "It slows down user typing speed intentionally",
+          "Show a clear “No Internet Connection” message with a retry option",
+          "Crash the application",
+          "Keep showing a loading spinner forever",
+          "Automatically logout the user",
         ],
         correctIndex: 0,
         explanation:
-            "Immediate, descriptive validation improves candidate experience, trust, and completion rates.",
+            "Clear error handling and giving a retry button keeps the user informed and in control.",
+      ),
+      AssessmentQuestion(
+        id: "q3",
+        category: "The Shopping Cart",
+        iconEmoji: "🛒",
+        question:
+            "A user adds a ₹500 product to the cart. They increase the quantity from 1 → 2.\n\nWhat should happen?",
+        options: [
+          "The total price should automatically update to ₹1,000",
+          "The user should restart the app",
+          "The user should open the cart again manually",
+          "Nothing should happen until checkout",
+        ],
+        correctIndex: 0,
+        explanation:
+            "Reactive state management ensures cart totals update instantly when item quantities change.",
       ),
       AssessmentQuestion(
         id: "q4",
-        category: "Performance & Code Sense",
-        iconEmoji: "⚡",
+        category: "1000+ Products Challenge",
+        iconEmoji: "📦",
         question:
-            "Which data structure provides an average time complexity of O(1) for instant user lookup by email or phone?",
+            "Imagine your shopping app has 1,000+ products coming from an API. You need to display these products in a list.\n\nWhat would be the better approach?",
         options: [
-          "Unsorted Linked List",
-          "Hash Map / Key-Value Lookup",
-          "Bubble Sorted Array",
-          "Single Stack with reverse pop",
+          "Load all 1,000+ products at once",
+          "Use pagination/lazy loading and load products in smaller batches",
+          "Hard-code all products in the app",
+          "Show only 10 products permanently",
         ],
         correctIndex: 1,
         explanation:
-            "Hash Maps provide near-constant O(1) time complexity for rapid key lookups.",
+            "Pagination and lazy loading optimize memory usage and keep the app fast and responsive.",
       ),
       AssessmentQuestion(
         id: "q5",
-        category: "Candidate Mindset",
-        iconEmoji: "🌟",
+        category: "The Mystery Button",
+        iconEmoji: "🐞",
         question:
-            "As an engineer applying through 11Jobs, what quality best demonstrates top-tier talent?",
+            "A user reports:\n\n“The Submit button is visible, but nothing happens when I tap it.”\n\nAs the developer, what would you check first?",
         options: [
-          "Never asking questions or seeking feedback",
-          "Writing clean code, continuous learning, and prioritizing user experience",
-          "Working completely isolated with zero team collaboration",
-          "Shipping code without verifying or testing it",
+          "Reinstall the operating system",
+          "Check whether the button's tap/click event is correctly connected to its function",
+          "Delete the database",
+          "Change the app logo",
         ],
         correctIndex: 1,
         explanation:
-            "Empathy for users, clean maintainable code, and collaborative growth define top engineers.",
+            "Checking if the button's onPressed/onClick callback is properly wired is the first diagnostic step.",
       ),
     ];
   }
