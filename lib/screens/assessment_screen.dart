@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/assessment_question.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand_logo.dart';
+import '../widgets/theme_switcher_button.dart';
 import 'animated_signin_screen.dart';
 import 'assessment_result_screen.dart';
 
@@ -133,27 +134,42 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentQ = _questions[_currentIndex];
     final progress = (_currentIndex + 1) / _questions.length;
     final selectedOption = _selectedAnswers[_currentIndex];
 
+    final bgColor = isDark ? const Color(0xFF060919) : AppTheme.lightBackground;
+    final cardBg = isDark ? const Color(0xFF0D1527) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+    final txtPrimary = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
+    final txtSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
         title: const BrandLogo(height: 24),
         actions: [
+          // 11Jobs Theme Switcher Button
+          const ThemeSwitcherButton(),
+          const SizedBox(width: 8),
+
           // Timer chip
           Container(
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: _secondsRemaining < 30 ? const Color(0xFFFEE2E2) : const Color(0xFFEFF6FF),
+              color: _secondsRemaining < 30
+                  ? (isDark ? const Color(0xFF450A0A) : const Color(0xFFFEE2E2))
+                  : (isDark ? const Color(0xFF132240) : const Color(0xFFEFF6FF)),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: _secondsRemaining < 30 ? const Color(0xFFFCA5A5) : const Color(0xFFBFDBFE),
+                color: _secondsRemaining < 30
+                    ? (isDark ? const Color(0xFF991B1B) : const Color(0xFFFCA5A5))
+                    : (isDark ? const Color(0xFF2563EB).withValues(alpha: 0.5) : const Color(0xFFBFDBFE)),
               ),
             ),
             child: Row(
@@ -162,7 +178,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                 Icon(
                   Icons.timer_outlined,
                   size: 16,
-                  color: _secondsRemaining < 30 ? AppTheme.errorColor : AppTheme.primaryBlue,
+                  color: _secondsRemaining < 30 ? AppTheme.errorColor : (isDark ? const Color(0xFF38BDF8) : AppTheme.primaryBlue),
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -170,7 +186,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: _secondsRemaining < 30 ? AppTheme.errorColor : AppTheme.primaryBlue,
+                    color: _secondsRemaining < 30 ? AppTheme.errorColor : (isDark ? const Color(0xFF38BDF8) : AppTheme.primaryBlue),
                   ),
                 ),
               ],
@@ -187,11 +203,12 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
               constraints: const BoxConstraints(maxWidth: 480),
               padding: const EdgeInsets.all(26.0),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: borderColor),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0038A8).withValues(alpha: 0.08),
+                    color: const Color(0xFF0038A8).withValues(alpha: isDark ? 0.3 : 0.08),
                     blurRadius: 36,
                     offset: const Offset(0, 14),
                     spreadRadius: 2,
@@ -213,7 +230,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                           style: TextStyle(
                             fontSize: 12.0,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.85),
+                            color: isDark ? const Color(0xFF38BDF8) : AppTheme.primaryBlue,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -221,10 +238,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                       const SizedBox(width: 8),
                       Text(
                         "Question ${_currentIndex + 1} of ${_questions.length}",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12.0,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textSecondary,
+                          color: txtSecondary,
                         ),
                       ),
                     ],
@@ -243,7 +260,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                         return LinearProgressIndicator(
                           value: value,
                           minHeight: 6,
-                          backgroundColor: const Color(0xFFE2E8F0),
+                          backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
                           valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
                         );
                       },
@@ -258,7 +275,7 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F1FD),
+                        color: isDark ? const Color(0xFF132240) : const Color(0xFFE8F1FD),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
@@ -268,10 +285,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                           const SizedBox(width: 6),
                           Text(
                             currentQ.category.toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11.0,
                               fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryBlue,
+                              color: isDark ? const Color(0xFF38BDF8) : AppTheme.primaryBlue,
                               letterSpacing: 0.8,
                             ),
                           ),
@@ -285,10 +302,10 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                   // Question Text
                   Text(
                     currentQ.question,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16.5,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: txtPrimary,
                       height: 1.45,
                     ),
                   ),
@@ -300,6 +317,14 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                     final isSelected = selectedOption == optIndex;
                     final optionLetter = String.fromCharCode(65 + optIndex); // A, B, C, D
 
+                    final optBg = isSelected
+                        ? (isDark ? const Color(0xFF172554) : const Color(0xFFEFF6FF))
+                        : (isDark ? const Color(0xFF0F1A30) : const Color(0xFFF8FAFC));
+
+                    final optBorder = isSelected
+                        ? (isDark ? const Color(0xFF3B82F6) : AppTheme.primaryBlue)
+                        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0));
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: InkWell(
@@ -310,18 +335,16 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                           duration: const Duration(milliseconds: 180),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                            color: optBg,
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: isSelected
-                                  ? AppTheme.primaryBlue
-                                  : const Color(0xFFE2E8F0),
+                              color: optBorder,
                               width: isSelected ? 1.8 : 1.2,
                             ),
                             boxShadow: [
                               if (isSelected)
                                 BoxShadow(
-                                  color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                                  color: AppTheme.primaryBlue.withValues(alpha: isDark ? 0.25 : 0.08),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -335,9 +358,13 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                                 height: 28,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isSelected ? AppTheme.primaryBlue : Colors.white,
+                                  color: isSelected
+                                      ? AppTheme.primaryBlue
+                                      : (isDark ? const Color(0xFF1E293B) : Colors.white),
                                   border: Border.all(
-                                    color: isSelected ? AppTheme.primaryBlue : const Color(0xFFCBD5E1),
+                                    color: isSelected
+                                        ? AppTheme.primaryBlue
+                                        : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                                   ),
                                 ),
                                 child: Center(
@@ -346,7 +373,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                                     style: TextStyle(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w800,
-                                      color: isSelected ? Colors.white : AppTheme.textSecondary,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : (isDark ? const Color(0xFF94A3B8) : AppTheme.textSecondary),
                                     ),
                                   ),
                                 ),
@@ -361,7 +390,9 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                                   style: TextStyle(
                                     fontSize: 13.5,
                                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                    color: isSelected ? AppTheme.primaryBlue : AppTheme.textPrimary,
+                                    color: isSelected
+                                        ? (isDark ? const Color(0xFF60A5FA) : AppTheme.primaryBlue)
+                                        : txtPrimary,
                                     height: 1.3,
                                   ),
                                 ),
@@ -389,14 +420,16 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(25),
                                 ),
-                                side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                                side: BorderSide(
+                                  color: isDark ? const Color(0xFF334155) : Colors.grey.withValues(alpha: 0.3),
+                                ),
                               ),
-                              child: const Text(
+                              child: Text(
                                 "Previous",
                                 style: TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w700,
-                                  color: AppTheme.textPrimary,
+                                  color: txtPrimary,
                                 ),
                               ),
                             ),

@@ -4,6 +4,7 @@ import 'package:_11jobs/main.dart';
 import 'package:_11jobs/screens/assessment_screen.dart';
 import 'package:_11jobs/screens/assessment_result_screen.dart';
 import 'package:_11jobs/screens/home_screen.dart';
+import 'package:_11jobs/theme/app_theme.dart';
 import 'package:_11jobs/widgets/brand_logo.dart';
 
 void main() {
@@ -159,12 +160,31 @@ void main() {
 
     // 7. Verify Dashboard with Candidate Name & Verified Status
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.textContaining('Rahul Sharma'), findsOneWidget);
+    expect(find.textContaining('Welcome, Rahul Sharma!'), findsOneWidget);
     expect(find.text('VERIFIED CANDIDATE'), findsOneWidget);
     expect(find.text('Hiring Workflow Pipeline'), findsOneWidget);
 
-    // 8. Test Logout & Direct Verified Sign In
-    await tester.tap(find.byTooltip('Logout'));
+    // 8. Test Right-Side Hamburger Menu Drawer Open & Theme Switch & Logout
+    await tester.tap(find.byKey(const Key('hamburgerMenuButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dark Mode'), findsOneWidget);
+    expect(find.byKey(const Key('drawerThemeSwitch')), findsOneWidget);
+
+    // Toggle Dark Mode in drawer
+    await tester.tap(find.byKey(const Key('drawerThemeSwitch')));
+    await tester.pumpAndSettle();
+    expect(AppTheme.isDark, true);
+
+    // Toggle back to Light Mode
+    await tester.tap(find.byKey(const Key('drawerThemeSwitch')));
+    await tester.pumpAndSettle();
+    expect(AppTheme.isDark, false);
+
+    expect(find.text('WORKFLOW PIPELINES'), findsOneWidget);
+    expect(find.text('Logout'), findsOneWidget);
+
+    await tester.tap(find.text('Logout'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sign In'), findsOneWidget);
@@ -187,7 +207,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.textContaining('Rahul Sharma'), findsOneWidget);
+    expect(find.textContaining('Welcome, Rahul Sharma!'), findsOneWidget);
   });
 
   testWidgets('Assessment Fail Flow: Retake Test & Retry', (WidgetTester tester) async {

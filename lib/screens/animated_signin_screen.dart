@@ -5,6 +5,7 @@ import '../widgets/animated_sign_in_button.dart';
 import '../widgets/brand_logo.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/otp_input_field.dart';
+import '../widgets/theme_switcher_button.dart';
 import 'assessment_screen.dart';
 import 'home_screen.dart';
 
@@ -1536,8 +1537,12 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF0D1527) : Colors.white;
+    final cardBorder = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: isDark ? const Color(0xFF060919) : AppTheme.lightBackground,
       body: Stack(
         children: [
           // Background Gradient Orbs (Runs single entrance animation only)
@@ -1569,17 +1574,18 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                     constraints: const BoxConstraints(maxWidth: 440),
                     padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 30.0),
                     decoration: BoxDecoration(
-                      color: AppTheme.cardBackground,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(32),
+                      border: Border.all(color: cardBorder),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0038A8).withValues(alpha: 0.09),
+                          color: const Color(0xFF0038A8).withValues(alpha: isDark ? 0.3 : 0.09),
                           blurRadius: 36,
                           offset: const Offset(0, 16),
                           spreadRadius: 2,
                         ),
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
+                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.03),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),

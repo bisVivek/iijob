@@ -70,6 +70,20 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final fieldBg = isDark
+        ? (_isFocused ? const Color(0xFF131F37) : const Color(0xFF0C1424))
+        : (_isFocused ? Colors.white : const Color(0xFFF3F6FA));
+
+    final borderColor = isDark
+        ? (_isFocused ? const Color(0xFF3B82F6) : const Color(0xFF1E293B))
+        : (_isFocused ? AppTheme.primaryBlue.withValues(alpha: 0.7) : const Color(0xFFE5EDF7).withValues(alpha: 0.8));
+
+    final prefixBg = isDark ? const Color(0xFF182744) : const Color(0xFFEBF2FD);
+    final textCol = isDark ? const Color(0xFFF8FAFC) : AppTheme.lightTextPrimary;
+    final hintCol = isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
+
     return FormField<String>(
       key: widget.fieldKey,
       initialValue: widget.controller?.text ?? '',
@@ -90,14 +104,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
               curve: Curves.easeInOut,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: _isFocused ? Colors.white : const Color(0xFFF3F6FA),
+                color: fieldBg,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: hasError
-                      ? AppTheme.errorColor
-                      : (_isFocused
-                          ? AppTheme.primaryBlue.withValues(alpha: 0.7)
-                          : const Color(0xFFE5EDF7).withValues(alpha: 0.8)),
+                  color: hasError ? AppTheme.errorColor : borderColor,
                   width: hasError || _isFocused ? 1.8 : 1.5,
                 ),
                 boxShadow: [
@@ -105,8 +115,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
                     color: hasError
                         ? AppTheme.errorColor.withValues(alpha: 0.08)
                         : (_isFocused
-                            ? AppTheme.primaryBlue.withValues(alpha: 0.08)
-                            : Colors.black.withValues(alpha: 0.02)),
+                            ? AppTheme.primaryBlue.withValues(alpha: 0.12)
+                            : Colors.black.withValues(alpha: isDark ? 0.2 : 0.02)),
                     blurRadius: _isFocused || hasError ? 12 : 5,
                     offset: const Offset(0, 2),
                   ),
@@ -122,17 +132,13 @@ class _CustomTextFieldState extends State<CustomTextField> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: hasError
-                            ? AppTheme.errorColor.withValues(alpha: 0.08)
-                            : const Color(0xFFEBF2FD),
+                        color: hasError ? AppTheme.errorColor.withValues(alpha: 0.08) : prefixBg,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         widget.prefixIcon,
                         size: 18,
-                        color: hasError
-                            ? AppTheme.errorColor
-                            : AppTheme.primaryBlue,
+                        color: hasError ? AppTheme.errorColor : AppTheme.primaryBlue,
                       ),
                     ),
 
@@ -152,18 +158,18 @@ class _CustomTextFieldState extends State<CustomTextField> {
                         widget.onChanged?.call(val);
                       },
                       onSubmitted: widget.onSubmitted,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.textPrimary,
+                        color: textCol,
                       ),
                       cursorColor: AppTheme.primaryBlue,
                       decoration: InputDecoration(
                         hintText: widget.hintText,
-                        hintStyle: const TextStyle(
+                        hintStyle: TextStyle(
                           fontSize: 14.0,
                           fontWeight: FontWeight.w400,
-                          color: Color(0xFF94A3B8),
+                          color: hintCol,
                         ),
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,

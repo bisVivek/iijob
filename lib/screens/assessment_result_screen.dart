@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand_logo.dart';
+import '../widgets/theme_switcher_button.dart';
 import 'home_screen.dart';
 import 'animated_signin_screen.dart';
 import 'assessment_screen.dart';
@@ -24,16 +25,27 @@ class AssessmentResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final verifiedId = "11J-VERIFIED-${(candidateName.hashCode.abs() % 9000 + 1000)}";
 
+    final bgColor = isDark ? const Color(0xFF060919) : AppTheme.lightBackground;
+    final cardBg = isDark ? const Color(0xFF0D1527) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+    final txtPrimary = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
+    final txtSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
         title: const BrandLogo(height: 24),
         automaticallyImplyLeading: false,
+        actions: const [
+          ThemeSwitcherButton(),
+          SizedBox(width: 16),
+        ],
       ),
       body: SafeArea(
         child: Center(
@@ -44,13 +56,14 @@ class AssessmentResultScreen extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 460),
               padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 32.0),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: borderColor),
                 boxShadow: [
                   BoxShadow(
                     color: isPassed
-                        ? const Color(0xFF005BFF).withValues(alpha: 0.12)
-                        : const Color(0xFFEF4444).withValues(alpha: 0.08),
+                        ? const Color(0xFF005BFF).withValues(alpha: isDark ? 0.25 : 0.12)
+                        : const Color(0xFFEF4444).withValues(alpha: isDark ? 0.25 : 0.08),
                     blurRadius: 36,
                     offset: const Offset(0, 14),
                     spreadRadius: 2,
@@ -97,10 +110,10 @@ class AssessmentResultScreen extends StatelessWidget {
                   Text(
                     isPassed ? "Assessment Passed! 🎉" : "Assessment Incomplete",
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.textPrimary,
+                      color: txtPrimary,
                       letterSpacing: 0.3,
                     ),
                   ),
@@ -113,9 +126,9 @@ class AssessmentResultScreen extends StatelessWidget {
                         ? "Congratulations, $candidateName! You have successfully verified your profile."
                         : "Nice try, $candidateName! An 80% passing score is required to unlock full access.",
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppTheme.textSecondary,
+                      color: txtSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -126,20 +139,24 @@ class AssessmentResultScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                     decoration: BoxDecoration(
-                      color: isPassed ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+                      color: isPassed
+                          ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFECFDF5))
+                          : (isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFFFBEB)),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: isPassed ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
+                        color: isPassed
+                            ? (isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0))
+                            : (isDark ? const Color(0xFFD97706) : const Color(0xFFFDE68A)),
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildMetric("SCORE", "$scorePercentage%"),
-                        Container(width: 1, height: 36, color: Colors.grey.withValues(alpha: 0.3)),
-                        _buildMetric("CORRECT", "$correctCount / $totalQuestions"),
-                        Container(width: 1, height: 36, color: Colors.grey.withValues(alpha: 0.3)),
-                        _buildMetric("STATUS", isPassed ? "VERIFIED" : "PENDING"),
+                        _buildMetric("SCORE", "$scorePercentage%", txtPrimary, txtSecondary),
+                        Container(width: 1, height: 36, color: borderColor),
+                        _buildMetric("CORRECT", "$correctCount / $totalQuestions", txtPrimary, txtSecondary),
+                        Container(width: 1, height: 36, color: borderColor),
+                        _buildMetric("STATUS", isPassed ? "VERIFIED" : "PENDING", txtPrimary, txtSecondary),
                       ],
                     ),
                   ),
@@ -151,9 +168,11 @@ class AssessmentResultScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0F6FF),
+                        color: isDark ? const Color(0xFF0F1D38) : const Color(0xFFF0F6FF),
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF2563EB).withValues(alpha: 0.4) : const Color(0xFFBFDBFE),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,32 +185,32 @@ class AssessmentResultScreen extends StatelessWidget {
                                 size: 22,
                               ),
                               const SizedBox(width: 8),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   "11Jobs Verified Candidate",
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 14.5,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryBlue,
+                                    color: isDark ? const Color(0xFF38BDF8) : AppTheme.primaryBlue,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 "#$verifiedId",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.textSecondary,
+                                  color: txtSecondary,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 10),
-                          _buildUnlockItem("Verified badge displayed on your recruiter profile"),
-                          _buildUnlockItem("Unlocked access to 11Jobs Dashboard & job applications"),
-                          _buildUnlockItem("Priority AI pipeline placement for high-match roles"),
+                          _buildUnlockItem("Verified badge displayed on your recruiter profile", txtPrimary),
+                          _buildUnlockItem("Unlocked access to 11Jobs Dashboard & job applications", txtPrimary),
+                          _buildUnlockItem("Priority AI pipeline placement for high-match roles", txtPrimary),
                         ],
                       ),
                     ),
@@ -200,9 +219,11 @@ class AssessmentResultScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
+                        color: isDark ? const Color(0xFF450A0A).withValues(alpha: 0.4) : const Color(0xFFFEF2F2),
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFFECACA)),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF991B1B) : const Color(0xFFFECACA),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,11 +243,11 @@ class AssessmentResultScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             "Top companies on 11Jobs seek candidates with demonstrated logic & engineering problem solving. Review your answers and try again!",
                             style: TextStyle(
                               fontSize: 12.5,
-                              color: Color(0xFF7F1D1D),
+                              color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF7F1D1D),
                               height: 1.4,
                             ),
                           ),
@@ -364,14 +385,16 @@ class AssessmentResultScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
-                          side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                          side: BorderSide(
+                            color: isDark ? const Color(0xFF334155) : Colors.grey.withValues(alpha: 0.3),
+                          ),
                         ),
-                        child: const Text(
+                        child: Text(
                           "Back to Sign In",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                            color: txtPrimary,
                           ),
                         ),
                       ),
@@ -386,24 +409,24 @@ class AssessmentResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetric(String label, String value) {
+  Widget _buildMetric(String label, String value, Color txtPrimary, Color txtSecondary) {
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AppTheme.textPrimary,
+            color: txtPrimary,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10.5,
             fontWeight: FontWeight.w600,
-            color: AppTheme.textSecondary,
+            color: txtSecondary,
             letterSpacing: 0.5,
           ),
         ),
@@ -411,7 +434,7 @@ class AssessmentResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUnlockItem(String text) {
+  Widget _buildUnlockItem(String text, Color txtPrimary) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3.5),
       child: Row(
@@ -425,7 +448,7 @@ class AssessmentResultScreen extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 12.5, color: AppTheme.textPrimary),
+              style: TextStyle(fontSize: 12.5, color: txtPrimary),
             ),
           ),
         ],
