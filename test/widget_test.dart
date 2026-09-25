@@ -1,14 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:_11jobs/main.dart';
 import 'package:_11jobs/screens/assessment_screen.dart';
 import 'package:_11jobs/screens/assessment_result_screen.dart';
 import 'package:_11jobs/screens/home_screen.dart';
+import 'package:_11jobs/screens/splash_screen.dart';
+import 'package:_11jobs/services/profile_storage_service.dart';
 import 'package:_11jobs/theme/app_theme.dart';
+import 'package:_11jobs/widgets/avatar_picker_modal.dart';
 import 'package:_11jobs/widgets/brand_logo.dart';
+import 'package:_11jobs/widgets/notification_center_modal.dart';
 
 void main() {
-  testWidgets('Full User Journey: Registration -> OTP -> Creative Assessment Test (Pass Flow) -> Verified Dashboard', (WidgetTester tester) async {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    await ProfileStorageService.clearProfileImage();
+  });
+
+  testWidgets('SplashScreen Launches with Signature Blue Theme and Transitions Automatically', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pump();
+
+    expect(find.byType(SplashScreen), findsOneWidget);
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign In'), findsOneWidget);
+  });
+
+  testWidgets('Full User Journey: Registration -> OTP -> Assessment -> Verified Dashboard', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -164,11 +185,30 @@ void main() {
     expect(find.text('VERIFIED CANDIDATE'), findsOneWidget);
     expect(find.text('Hiring Workflow Pipeline'), findsOneWidget);
 
-    // 8. Test Right-Side Hamburger Menu Drawer Open & Theme Switch & Logout
+    // 8. Test Enhanced Notification Bell & Modal
+    expect(find.byKey(const Key('notificationBellButton')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('notificationBellButton')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NotificationCenterModal), findsOneWidget);
+    expect(find.text('Activity & Alerts'), findsOneWidget);
+    expect(find.text('Interviews'), findsOneWidget);
+    expect(find.text('Recruiters'), findsOneWidget);
+
+    // Filter by Interviews
+    await tester.tap(find.text('Interviews'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Interview Scheduled'), findsOneWidget);
+
+    // Close Notification Modal
+    await tester.tap(find.byIcon(Icons.close_rounded).first);
+    await tester.pumpAndSettle();
+
+    // 9. Test Right-Side Hamburger Menu Drawer Open & Theme Switch & Logout
     await tester.tap(find.byKey(const Key('hamburgerMenuButton')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Dark Mode'), findsOneWidget);
+    expect(find.text('Theme Preference'), findsOneWidget);
     expect(find.byKey(const Key('drawerThemeSwitch')), findsOneWidget);
 
     // Toggle Dark Mode in drawer
@@ -181,9 +221,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(AppTheme.isDark, false);
 
-    expect(find.text('Active Pipelines'), findsOneWidget);
-    expect(find.text('Logout'), findsOneWidget);
+    // Test Drawer Avatar Photo Picker Trigger
+    expect(find.byKey(const Key('drawerCandidateCard')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('drawerCandidateCard')));
+    await tester.pumpAndSettle();
 
+    expect(find.byType(AvatarPickerModal), findsOneWidget);
+    expect(find.text('Profile Photo'), findsOneWidget);
+    expect(find.text('Choose Gallery'), findsOneWidget);
+
+    // Select preset avatar
+    await tester.tap(find.text('Flutter Architect'));
+    await tester.pumpAndSettle();
+
+    if (find.text('Logout').evaluate().isEmpty) {
+      await tester.tap(find.byKey(const Key('hamburgerMenuButton')));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('Logout'), findsOneWidget);
     await tester.tap(find.text('Logout'));
     await tester.pumpAndSettle();
 
@@ -209,7 +265,7 @@ void main() {
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.textContaining('Welcome, Rahul Sharma!'), findsOneWidget);
 
-    // 9. Test Bottom Navigation Bar Tabs
+    // 10. Test Bottom Navigation Bar Tabs
     // Tab 1: Pipelines
     await tester.tap(find.byKey(const Key('bottomNavItem_1')));
     await tester.pumpAndSettle();
@@ -234,12 +290,20 @@ void main() {
     expect(find.text('Contact Details'), findsOneWidget);
     expect(find.text('Flutter & Dart Architecture'), findsOneWidget);
 
+    // Test Profile Tab Avatar Photo Picker
+    expect(find.byKey(const Key('profileAvatarPickerButton')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('profileAvatarPickerButton')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AvatarPickerModal), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close_rounded).first);
+    await tester.pumpAndSettle();
+
     // Return to Tab 0: Dashboard
     await tester.tap(find.byKey(const Key('bottomNavItem_0')));
     await tester.pumpAndSettle();
     expect(find.text('Hiring Workflow Pipeline'), findsOneWidget);
 
-    // 10. Test Drawer Navigation to Tabs & Modal
+    // 11. Test Drawer Navigation to Tabs & Modal
     await tester.tap(find.byKey(const Key('hamburgerMenuButton')));
     await tester.pumpAndSettle();
 
@@ -249,7 +313,7 @@ void main() {
     await tester.tap(find.text('Got It'));
     await tester.pumpAndSettle();
 
-    // 11. Test Ultra-Narrow Viewport (320px width) for Zero Overflows
+    // 12. Test Ultra-Narrow Viewport (320px width) for Zero Overflows
     tester.view.physicalSize = const Size(320, 640);
     await tester.pumpAndSettle();
 

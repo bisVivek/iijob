@@ -1,86 +1,7 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// 11Jobs Signature Yellow Flower / Asterisk Custom Painter
-class ElevenJobsFlowerPainter extends CustomPainter {
-  final Color color;
-  final int petalCount;
-
-  const ElevenJobsFlowerPainter({
-    required this.color,
-    this.petalCount = 12,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) / 2;
-    final petalLength = radius * 0.85;
-    final petalWidth = radius * 0.22;
-
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill
-      ..isAntiAlias = true;
-
-    for (int i = 0; i < petalCount; i++) {
-      final angle = (i * 2 * math.pi) / petalCount;
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(angle);
-
-      // Draw rounded petal
-      final petalRect = RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(0, -petalLength / 2),
-          width: petalWidth,
-          height: petalLength,
-        ),
-        Radius.circular(petalWidth / 2),
-      );
-      canvas.drawRRect(petalRect, paint);
-
-      canvas.restore();
-    }
-
-    // Center hub
-    canvas.drawCircle(center, radius * 0.22, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant ElevenJobsFlowerPainter oldDelegate) {
-    return oldDelegate.color != color || oldDelegate.petalCount != petalCount;
-  }
-}
-
-/// 11Jobs Flower Icon Widget
-class ElevenJobsFlowerIcon extends StatelessWidget {
-  final double size;
-  final Color color;
-
-  const ElevenJobsFlowerIcon({
-    super.key,
-    this.size = 22,
-    this.color = const Color(0xFFFACC15), // Vibrant 11Jobs Yellow
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: ElevenJobsFlowerPainter(
-          color: color,
-          petalCount: 12,
-        ),
-      ),
-    );
-  }
-}
-
-/// Professional Drawer Theme Toggle Card (Linear / Raycast Styled)
+/// Interactive Raycast / Linear Styled Drawer Theme Toggle Card (No Yellow - Sleek Blue/Indigo/Slate Flow)
 class DrawerThemeToggleCard extends StatelessWidget {
   const DrawerThemeToggleCard({super.key});
 
@@ -93,10 +14,9 @@ class DrawerThemeToggleCard extends StatelessWidget {
 
         final cardBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
         final cardBorder = isDark
-            ? const Color(0xFFFACC15).withValues(alpha: 0.35)
-            : const Color(0xFFE2E8F0);
+            ? const Color(0xFF6366F1).withValues(alpha: 0.4)
+            : const Color(0xFFCBD5E1);
         final txtPrimary = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
-        final txtSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
@@ -112,14 +32,14 @@ class DrawerThemeToggleCard extends StatelessWidget {
             boxShadow: [
               if (isDark)
                 BoxShadow(
-                  color: const Color(0xFFFACC15).withValues(alpha: 0.12),
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.15),
                   blurRadius: 18,
                   offset: const Offset(0, 4),
                 )
               else
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
+                  color: const Color(0xFF005BFF).withValues(alpha: 0.05),
+                  blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
             ],
@@ -130,27 +50,27 @@ class DrawerThemeToggleCard extends StatelessWidget {
               // Header Row: Icon + Title + Switch
               Row(
                 children: [
-                  // Animated Morphing Icon Badge (Yellow Glow in Dark Mode, Golden Sun in Light Mode)
+                  // Animated Morphing Icon Badge (Indigo/Cyan in Dark Mode, Royal Blue in Light Mode)
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEF9C3),
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isDark ? const Color(0xFFFACC15) : const Color(0xFFFDE047),
+                        color: isDark ? const Color(0xFF6366F1) : const Color(0xFF38BDF8),
                         width: 1.5,
                       ),
                       boxShadow: [
                         if (isDark)
                           BoxShadow(
-                            color: const Color(0xFFFACC15).withValues(alpha: 0.4),
+                            color: const Color(0xFF6366F1).withValues(alpha: 0.35),
                             blurRadius: 12,
                             offset: const Offset(0, 2),
                           )
                         else
                           BoxShadow(
-                            color: const Color(0xFFFACC15).withValues(alpha: 0.2),
+                            color: const Color(0xFF005BFF).withValues(alpha: 0.2),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -163,7 +83,7 @@ class DrawerThemeToggleCard extends StatelessWidget {
                       child: Icon(
                         isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
                         size: 20,
-                        color: isDark ? const Color(0xFFFACC15) : const Color(0xFFD97706),
+                        color: isDark ? const Color(0xFF818CF8) : const Color(0xFF005BFF),
                       ),
                     ),
                   ),
@@ -176,7 +96,7 @@ class DrawerThemeToggleCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Dark Mode",
+                          "Theme Preference",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
@@ -185,56 +105,80 @@ class DrawerThemeToggleCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          isDark ? "11Jobs Midnight Dark 🌙" : "Clean Crisp Light ☀️",
+                          isDark ? "Midnight Obsidian 🌙" : "Daylight Crisp ☀️",
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? const Color(0xFFFACC15) : txtSecondary,
+                            color: isDark ? const Color(0xFF818CF8) : const Color(0xFF005BFF),
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  // Yellow-Themed Switch Toggle with Thumb Icons
-                  Switch(
+                  // Interactive Custom Pill Switch (Fluid Slide Animation)
+                  GestureDetector(
                     key: const Key('drawerThemeSwitch'),
-                    value: isDark,
-                    activeThumbColor: const Color(0xFFFACC15), // Vibrant 11Jobs Yellow
-                    activeTrackColor: const Color(0xFF334155),
-                    inactiveThumbColor: const Color(0xFFF59E0B),
-                    inactiveTrackColor: const Color(0xFFE2E8F0),
-                    trackOutlineColor: WidgetStateProperty.resolveWith<Color?>(
-                      (states) => states.contains(WidgetState.selected)
-                          ? const Color(0xFFFACC15).withValues(alpha: 0.6)
-                          : const Color(0xFFCBD5E1),
-                    ),
-                    thumbIcon: WidgetStateProperty.resolveWith<Icon?>(
-                      (Set<WidgetState> states) {
-                        if (states.contains(WidgetState.selected)) {
-                          return const Icon(
-                            Icons.dark_mode_rounded,
-                            size: 13,
-                            color: Color(0xFF0F172A),
-                          );
-                        }
-                        return const Icon(
-                          Icons.light_mode_rounded,
-                          size: 13,
-                          color: Color(0xFFFFFFFF),
-                        );
-                      },
-                    ),
-                    onChanged: (val) {
+                    onTap: () {
                       AppTheme.toggleTheme();
                     },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 280),
+                      curve: Curves.easeInOut,
+                      width: 52,
+                      height: 28,
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF312E81) : const Color(0xFF005BFF),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isDark ? const Color(0xFF6366F1) : const Color(0xFF005BFF))
+                                .withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          AnimatedAlign(
+                            duration: const Duration(milliseconds: 280),
+                            curve: Curves.easeOutBack,
+                            alignment: isDark ? Alignment.centerRight : Alignment.centerLeft,
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                                  size: 13,
+                                  color: isDark ? const Color(0xFF4338CA) : const Color(0xFF005BFF),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
 
               const SizedBox(height: 12),
 
-              // Segmented Modern Theme Tabs (Light / Dark)
+              // Segmented Modern Theme Tabs (Daylight Light / Obsidian Dark)
               Container(
                 height: 40,
                 padding: const EdgeInsets.all(3.5),
@@ -255,8 +199,8 @@ class DrawerThemeToggleCard extends StatelessWidget {
                       child: InkWell(
                         key: const Key('themeSelectorLightTab'),
                         borderRadius: BorderRadius.circular(9),
-                        splashColor: const Color(0xFFFACC15).withValues(alpha: 0.2),
-                        highlightColor: const Color(0xFFFACC15).withValues(alpha: 0.1),
+                        splashColor: const Color(0xFF005BFF).withValues(alpha: 0.15),
+                        highlightColor: const Color(0xFF005BFF).withValues(alpha: 0.08),
                         onTap: () {
                           if (isDark) AppTheme.setTheme(ThemeMode.light);
                         },
@@ -288,7 +232,7 @@ class DrawerThemeToggleCard extends StatelessWidget {
                               Icon(
                                 Icons.light_mode_rounded,
                                 size: 16,
-                                color: !isDark ? const Color(0xFFD97706) : const Color(0xFF64748B),
+                                color: !isDark ? const Color(0xFF005BFF) : const Color(0xFF64748B),
                               ),
                               const SizedBox(width: 6),
                               Flexible(
@@ -310,13 +254,13 @@ class DrawerThemeToggleCard extends StatelessWidget {
 
                     const SizedBox(width: 4),
 
-                    // Dark Tab Pill (Glowing Yellow Accent when active)
+                    // Dark Tab Pill (Glowing Electric Indigo & Cyan when active)
                     Expanded(
                       child: InkWell(
                         key: const Key('themeSelectorDarkTab'),
                         borderRadius: BorderRadius.circular(9),
-                        splashColor: const Color(0xFFFACC15).withValues(alpha: 0.2),
-                        highlightColor: const Color(0xFFFACC15).withValues(alpha: 0.1),
+                        splashColor: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                        highlightColor: const Color(0xFF6366F1).withValues(alpha: 0.1),
                         onTap: () {
                           if (!isDark) AppTheme.setTheme(ThemeMode.dark);
                         },
@@ -324,18 +268,18 @@ class DrawerThemeToggleCard extends StatelessWidget {
                           duration: const Duration(milliseconds: 220),
                           curve: Curves.easeInOut,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF16233B) : Colors.transparent,
+                            color: isDark ? const Color(0xFF1E293B) : Colors.transparent,
                             borderRadius: BorderRadius.circular(9),
                             border: isDark
                                 ? Border.all(
-                                    color: const Color(0xFFFACC15).withValues(alpha: 0.6),
+                                    color: const Color(0xFF6366F1).withValues(alpha: 0.8),
                                     width: 1.2,
                                   )
                                 : null,
                             boxShadow: isDark
                                 ? [
                                     BoxShadow(
-                                      color: const Color(0xFFFACC15).withValues(alpha: 0.22),
+                                      color: const Color(0xFF6366F1).withValues(alpha: 0.25),
                                       blurRadius: 8,
                                       offset: const Offset(0, 1),
                                     ),
@@ -348,7 +292,7 @@ class DrawerThemeToggleCard extends StatelessWidget {
                               Icon(
                                 Icons.dark_mode_rounded,
                                 size: 16,
-                                color: isDark ? const Color(0xFFFACC15) : const Color(0xFF64748B),
+                                color: isDark ? const Color(0xFF818CF8) : const Color(0xFF64748B),
                               ),
                               const SizedBox(width: 6),
                               Flexible(
@@ -358,7 +302,7 @@ class DrawerThemeToggleCard extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: isDark ? FontWeight.w800 : FontWeight.w600,
-                                    color: isDark ? const Color(0xFFFACC15) : const Color(0xFF64748B),
+                                    color: isDark ? const Color(0xFFF8FAFC) : const Color(0xFF64748B),
                                   ),
                                 ),
                               ),
@@ -378,7 +322,71 @@ class DrawerThemeToggleCard extends StatelessWidget {
   }
 }
 
-/// Floating Docked Theme Toggle (Optional)
+/// Standard AppBar / In-line Theme Switcher Button (No Yellow - Interactive Blue/Indigo Glow)
+class ThemeSwitcherButton extends StatelessWidget {
+  final bool isFloating;
+
+  const ThemeSwitcherButton({
+    super.key,
+    this.isFloating = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppTheme.themeModeNotifier,
+      builder: (context, currentMode, _) {
+        final isDark = currentMode == ThemeMode.dark;
+
+        return Tooltip(
+          message: isDark ? "Switch to Daylight Theme" : "Switch to Midnight Theme",
+          child: InkWell(
+            key: const Key('themeSwitcherButton'),
+            onTap: () {
+              AppTheme.toggleTheme();
+            },
+            borderRadius: BorderRadius.circular(20),
+            splashColor: const Color(0xFF005BFF).withValues(alpha: 0.2),
+            highlightColor: const Color(0xFF005BFF).withValues(alpha: 0.1),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF162035) : const Color(0xFFEFF6FF),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? const Color(0xFF6366F1) : const Color(0xFF38BDF8),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? const Color(0xFF6366F1).withValues(alpha: 0.35)
+                        : const Color(0xFF005BFF).withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: AnimatedRotation(
+                turns: isDark ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutBack,
+                child: Icon(
+                  isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                  size: 19,
+                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF005BFF),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Floating Docked Theme Toggle
 class ElevenJobsFloatingThemeToggle extends StatefulWidget {
   final double topOffset;
 
@@ -401,7 +409,7 @@ class _ElevenJobsFloatingThemeToggleState extends State<ElevenJobsFloatingThemeT
     super.initState();
     _rotationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
     );
   }
 
@@ -430,7 +438,7 @@ class _ElevenJobsFloatingThemeToggleState extends State<ElevenJobsFloatingThemeT
             onEnter: (_) => setState(() => _isHovered = true),
             onExit: (_) => setState(() => _isHovered = false),
             child: Tooltip(
-              message: isDark ? "Switch to Light Theme" : "Switch to 11Jobs Dark Theme",
+              message: isDark ? "Switch to Daylight Theme" : "Switch to Midnight Theme",
               child: GestureDetector(
                 key: const Key('floating11JobsThemeToggle'),
                 onTap: _handleToggle,
@@ -450,7 +458,9 @@ class _ElevenJobsFloatingThemeToggleState extends State<ElevenJobsFloatingThemeT
                     ),
                     border: Border(
                       left: BorderSide(
-                        color: isDark ? const Color(0xFFFACC15).withValues(alpha: 0.7) : const Color(0xFFCBD5E1),
+                        color: isDark
+                            ? const Color(0xFF6366F1).withValues(alpha: 0.7)
+                            : const Color(0xFF005BFF),
                         width: 1.4,
                       ),
                       top: BorderSide(
@@ -470,7 +480,7 @@ class _ElevenJobsFloatingThemeToggleState extends State<ElevenJobsFloatingThemeT
                       ),
                       if (isDark)
                         BoxShadow(
-                          color: const Color(0xFFFACC15).withValues(alpha: 0.25),
+                          color: const Color(0xFF6366F1).withValues(alpha: 0.25),
                           blurRadius: 10,
                           offset: const Offset(-1, 0),
                         ),
@@ -478,75 +488,12 @@ class _ElevenJobsFloatingThemeToggleState extends State<ElevenJobsFloatingThemeT
                   ),
                   child: RotationTransition(
                     turns: _rotationController,
-                    child: ElevenJobsFlowerIcon(
-                      size: 26,
-                      color: isDark ? const Color(0xFFFACC15) : const Color(0xFFEAB308),
+                    child: Icon(
+                      isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                      size: 24,
+                      color: isDark ? const Color(0xFF818CF8) : const Color(0xFF005BFF),
                     ),
                   ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Standard AppBar / In-line Theme Switcher Button
-class ThemeSwitcherButton extends StatelessWidget {
-  final bool isFloating;
-
-  const ThemeSwitcherButton({
-    super.key,
-    this.isFloating = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: AppTheme.themeModeNotifier,
-      builder: (context, currentMode, _) {
-        final isDark = currentMode == ThemeMode.dark;
-
-        return Tooltip(
-          message: isDark ? "Switch to Light Theme" : "Switch to 11Jobs Dark Theme",
-          child: InkWell(
-            key: const Key('themeSwitcherButton'),
-            onTap: () {
-              AppTheme.toggleTheme();
-            },
-            borderRadius: BorderRadius.circular(20),
-            splashColor: const Color(0xFFFACC15).withValues(alpha: 0.3),
-            highlightColor: const Color(0xFFFACC15).withValues(alpha: 0.15),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF162035) : const Color(0xFFFEF9C3),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark ? const Color(0xFFFACC15) : const Color(0xFFFDE047),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark
-                        ? const Color(0xFFFACC15).withValues(alpha: 0.35)
-                        : const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: AnimatedRotation(
-                turns: isDark ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeOutBack,
-                child: Icon(
-                  isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                  size: 19,
-                  color: isDark ? const Color(0xFFFACC15) : const Color(0xFFD97706),
                 ),
               ),
             ),

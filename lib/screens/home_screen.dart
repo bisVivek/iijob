@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../models/notification_item.dart';
+import '../services/profile_storage_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/avatar_picker_modal.dart';
 import '../widgets/brand_logo.dart';
-import '../widgets/theme_switcher_button.dart';
 import '../widgets/fade_slide_transition.dart';
 import '../widgets/animated_counter.dart';
-import '../widgets/pulsing_badge.dart';
 import '../widgets/interactive_card.dart';
+import '../widgets/notification_center_modal.dart';
+import '../widgets/pulsing_badge.dart';
+import '../widgets/theme_switcher_button.dart';
 import 'animated_signin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,14 +33,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _bottomNavIndex = 0;
   int _selectedFilterIndex = 0;
+  late List<NotificationItem> _notifications;
 
   // Candidate Details (Defaults to Vivek Bisht, Flutter Developer)
   String get _candidateName =>
       (widget.username.isNotEmpty && widget.username != "User") ? widget.username : "Vivek Bisht";
-  final String _candidateRole = "Senior Flutter Developer & Mobile Systems Architect";
+  final String _candidateRole = " Flutter Developer & Mobile Systems Architect";
   final String _candidateEmail = "vivek5832017@gmail.com";
   final String _candidatePhone = "8171152213";
   final String _candidateFormattedPhone = "+91 8171152213";
+
+  @override
+  void initState() {
+    super.initState();
+    _notifications = NotificationItem.getInitialMockNotifications(_candidateName);
+  }
+
+  int get _unreadNotificationCount => _notifications.where((n) => !n.isRead).length;
 
   final List<String> _filterChips = [
     "All Active Pipelines",
@@ -79,38 +92,61 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
         // Right Side: Notification Bell & Right Hamburger Menu Button
         actions: [
-          // Notification Bell with Active Indicator
+          // Notification Bell with Interactive Badge & Modal Sheet
           Stack(
             alignment: Alignment.center,
+            clipBehavior: Clip.none,
             children: [
               IconButton(
+                key: const Key('notificationBellButton'),
                 icon: Icon(
-                  Icons.notifications_none_rounded,
-                  color: txtPrimary,
+                  _unreadNotificationCount > 0
+                      ? Icons.notifications_active_rounded
+                      : Icons.notifications_none_rounded,
+                  color: _unreadNotificationCount > 0
+                      ? const Color(0xFF005BFF)
+                      : txtPrimary,
                   size: 23,
                 ),
+                tooltip: 'Activity & Notifications',
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFF005BFF),
-                      content: Text("3 enterprise recruiters reviewed $_candidateName's verified scorecard!"),
-                      behavior: SnackBarBehavior.floating,
-                    ),
+                  NotificationCenterModal.show(
+                    context,
+                    candidateName: _candidateName,
+                    notifications: _notifications,
+                    onUpdated: () => setState(() {}),
                   );
                 },
               ),
-              Positioned(
-                top: 14,
-                right: 14,
-                child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEF4444),
-                    shape: BoxShape.circle,
+              if (_unreadNotificationCount > 0)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: IgnorePointer(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF005BFF),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF005BFF).withValues(alpha: 0.5),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        "$_unreadNotificationCount",
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
 
@@ -389,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             delayMs: 150,
             child: _buildActivePipelineCard(
               company: "TechFlow Systems",
-              role: "Senior Flutter Architect",
+              role: " Flutter Architect",
               stage: "Stage 3 of 4: Recruiter Review",
               statusColor: const Color(0xFF3B82F6),
               progress: 0.75,
@@ -701,7 +737,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           FadeSlideTransition(
             delayMs: 150,
             child: _buildJobCard(
-              title: "Senior Flutter Architect",
+              title: " Flutter Architect",
               company: "TechFlow Systems",
               location: "Remote (Global)",
               matchScore: 98,
@@ -1092,38 +1128,46 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
               child: Column(
                 children: [
-                  // Avatar with Animated Glowing Gold/Blue Ring
-                  PulsingBadge(
-                    glowColor: const Color(0xFFFACC15),
-                    maxBlur: 14,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        border: Border.all(color: const Color(0xFFFACC15), width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          _candidateName.length >= 2
-                              ? _candidateName.substring(0, 2).toUpperCase()
-                              : "VB",
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF005BFF),
-                            letterSpacing: 1,
+                  // Avatar with Interactive Photo Picker and Glow Ring
+                  InkWell(
+                    key: const Key('profileAvatarPickerButton'),
+                    onTap: () {
+                      AvatarPickerModal.show(context, candidateName: _candidateName);
+                    },
+                    borderRadius: BorderRadius.circular(50),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        PulsingBadge(
+                          glowColor: const Color(0xFF38BDF8),
+                          maxBlur: 14,
+                          child: ProfileStorageService.buildAvatarWidget(
+                            candidateName: _candidateName,
+                            radius: 40,
+                            borderColor: const Color(0xFF38BDF8),
                           ),
                         ),
-                      ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF005BFF),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.25),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -2009,7 +2053,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "Senior Flutter Architect • TechFlow Systems",
+                    " Flutter Architect • TechFlow Systems",
                     style: TextStyle(fontSize: 11, color: txtSecondary),
                   ),
                 ],
@@ -2337,7 +2381,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
           const SizedBox(height: 12),
           _buildJobCard(
-            title: "Senior Flutter Architect",
+            title: " Flutter Architect",
             company: "TechFlow Systems",
             location: "Remote (Global)",
             matchScore: 98,
@@ -2766,53 +2810,73 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
             const Divider(height: 1),
 
-            // Candidate Summary Card
+            // Candidate Summary Card with Image Upload & Storage Trigger
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: borderColor),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppTheme.primaryBlue,
-                      ),
-                      child: Center(
-                        child: Text(
-                          _candidateName.length >= 2
-                              ? _candidateName.substring(0, 2).toUpperCase()
-                              : "VB",
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              child: InkWell(
+                key: const Key('drawerCandidateCard'),
+                onTap: () {
+                  AvatarPickerModal.show(context, candidateName: _candidateName);
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Row(
+                    children: [
+                      Stack(
                         children: [
-                          Text(
-                            _candidateName,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: txtPrimary),
+                          ProfileStorageService.buildAvatarWidget(
+                            candidateName: _candidateName,
+                            radius: 20,
+                            borderColor: const Color(0xFF005BFF),
                           ),
-                          Text(
-                            _candidateEmail,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 10.5, color: txtSecondary),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(2.5),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF005BFF),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt, size: 9, color: Colors.white),
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    _candidateName,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: txtPrimary),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.edit_outlined, size: 12, color: Color(0xFF005BFF)),
+                              ],
+                            ),
+                            Text(
+                              _candidateEmail,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 10.5, color: txtSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

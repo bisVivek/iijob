@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// A smooth, high-performance entrance animation widget that fades and slides its child.
-/// Uses staggered delays to create fluid, senior-developer level UI presentations.
+/// Uses staggered delays to create fluid, -developer level UI presentations.
 class FadeSlideTransition extends StatefulWidget {
   final Widget child;
   final int delayMs;
