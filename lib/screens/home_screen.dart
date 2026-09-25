@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/brand_logo.dart';
 import 'animated_signin_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -17,14 +18,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          "Home",
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 20,
-          ),
-        ),
+        title: const BrandLogo(height: 24),
         actions: [
           IconButton(
             tooltip: 'Logout',
@@ -100,13 +94,13 @@ class HomeScreen extends StatelessWidget {
 
               // Title
               Text(
-                "Welcome, $username!",
+                "Welcome to 11Jobs, $username!",
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 26,
+                  fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.textPrimary,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.3,
                 ),
               ),
 
@@ -120,12 +114,12 @@ class HomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
-                  "COMING SOON",
+                  "11JOBS DASHBOARD • COMING SOON",
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 12.0,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.primaryBlue,
-                    letterSpacing: 1.5,
+                    letterSpacing: 1.2,
                   ),
                 ),
               ),
@@ -134,7 +128,7 @@ class HomeScreen extends StatelessWidget {
 
               // Subtext
               const Text(
-                "We are crafting something amazing for you.\nStay tuned for upcoming updates!",
+                "We are crafting something amazing for your job dashboard.\nStay tuned for upcoming updates!",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14.5,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_corner_shapes.dart';
 import '../widgets/animated_sign_in_button.dart';
+import '../widgets/brand_logo.dart';
 import '../widgets/custom_text_field.dart';
 import 'home_screen.dart';
 
@@ -16,11 +17,13 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _mainController;
 
-  // Staggered Entrance Animations
+  // Staggered Entrance Animations (Plays only once on startup)
   late Animation<double> _cornerShapesAnimation;
   late Animation<double> _cardScaleAnimation;
   late Animation<double> _cardFadeAnimation;
   late Animation<Offset> _cardSlideAnimation;
+  late Animation<double> _logoFadeAnimation;
+  late Animation<Offset> _logoSlideAnimation;
   late Animation<double> _titleFadeAnimation;
   late Animation<Offset> _titleSlideAnimation;
   late Animation<double> _field1Animation;
@@ -38,14 +41,13 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   // Form & Controllers
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _usernameController = TextEditingController(text: "User/Developer");
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // One-time smooth entrance animation on screen load
     _mainController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -56,7 +58,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   }
 
   void _setupAnimations() {
-    // 1. Background corner deep-navy/blue shapes
+    // 1. Background corner shapes
     _cornerShapesAnimation = CurvedAnimation(
       parent: _mainController,
       curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack),
@@ -85,7 +87,24 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       ),
     );
 
-    // 3. Title & Subtitle
+    // 3. 11Jobs Logo
+    _logoFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainController,
+        curve: const Interval(0.25, 0.65, curve: Curves.easeOut),
+      ),
+    );
+    _logoSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.3),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _mainController,
+        curve: const Interval(0.25, 0.65, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // 4. Title & Subtitle
     _titleFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _mainController,
@@ -102,7 +121,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       ),
     );
 
-    // 4. Input Fields
+    // 5. Input Fields
     _field1Animation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _mainController,
@@ -135,7 +154,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       ),
     );
 
-    // 5. Action Button
+    // 6. Action Button
     _buttonAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _mainController,
@@ -152,7 +171,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       ),
     );
 
-    // 6. Footer Links & Dividers
+    // 7. Footer Links
     _footerAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _mainController,
@@ -165,7 +184,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   void dispose() {
     _mainController.dispose();
     _nameController.dispose();
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -194,10 +213,10 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       final displayName = _isSignUp
           ? (_nameController.text.trim().isNotEmpty
               ? _nameController.text.trim()
-              : "Developer")
-          : (_usernameController.text.trim().isNotEmpty
-              ? _usernameController.text.trim()
-              : "Developer");
+              : "11Jobs User")
+          : (_emailController.text.trim().isNotEmpty
+              ? _emailController.text.trim().split('@').first
+              : "11Jobs User");
 
       // Navigate to blank Coming Soon Home Screen
       Navigator.of(context).pushReplacement(
@@ -216,22 +235,51 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
     }
   }
 
+  Widget _buildFieldLabel(String label, {bool showInfo = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          if (showInfo) ...[
+            const SizedBox(width: 4),
+            Tooltip(
+              message: "Must be at least 6 characters",
+              child: Icon(
+                Icons.info_outline_rounded,
+                size: 15,
+                color: AppTheme.textSecondary.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: Stack(
         children: [
-          // 1. Background Orbs & Concentric Halos (Matches image)
+          // 1. Background Orbs & Concentric Halos (One-time smooth entrance)
           AnimatedCornerShapes(
             entranceProgress: _cornerShapesAnimation,
           ),
 
-          // 2. Central Sign In Card
+          // 2. Central Sign In / Sign Up Card
           Center(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 28.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 32.0),
               child: AnimatedBuilder(
                 animation: _mainController,
                 builder: (context, child) {
@@ -248,10 +296,10 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                 },
                 child: Container(
                   width: double.infinity,
-                  constraints: const BoxConstraints(maxWidth: 380),
+                  constraints: const BoxConstraints(maxWidth: 390),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 22.0,
-                    vertical: 28.0,
+                    horizontal: 24.0,
+                    vertical: 30.0,
                   ),
                   decoration: BoxDecoration(
                     color: AppTheme.cardSurface,
@@ -276,22 +324,27 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // --- Blue Accent Bar ---
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            width: 34,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryBlue,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
+                        // --- 11Jobs SVG Logo Header ---
+                        AnimatedBuilder(
+                          animation: _mainController,
+                          builder: (context, child) {
+                            return SlideTransition(
+                              position: _logoSlideAnimation,
+                              child: FadeTransition(
+                                opacity: _logoFadeAnimation,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: const Align(
+                            alignment: Alignment.centerLeft,
+                            child: BrandLogo(height: 28),
                           ),
                         ),
 
-                        const SizedBox(height: 16.0),
+                        const SizedBox(height: 20.0),
 
-                        // --- Title: "SIGN IN" / "SIGN UP" (Two-tone) ---
+                        // --- Title & Subtitle: "Sign In" / "Sign Up" ---
                         AnimatedBuilder(
                           animation: _mainController,
                           builder: (context, child) {
@@ -306,32 +359,20 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text.rich(
-                                TextSpan(
-                                  text: "SIGN ",
-                                  style: const TextStyle(
-                                    fontSize: 28.0,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppTheme.textPrimary,
-                                    letterSpacing: 1.0,
-                                    fontFamily: 'Roboto',
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: _isSignUp ? "UP" : "IN",
-                                      style: const TextStyle(
-                                        color: AppTheme.primaryBlue,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ],
+                              Text(
+                                _isSignUp ? "Sign Up" : "Sign In",
+                                style: const TextStyle(
+                                  fontSize: 26.0,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.textPrimary,
+                                  letterSpacing: 0.3,
                                 ),
                               ),
                               const SizedBox(height: 6.0),
                               Text(
                                 _isSignUp
-                                    ? "Create your account to get started."
-                                    : "Welcome back! Please sign in to continue.",
+                                    ? "Create your account to access 11Jobs dashboard"
+                                    : "Login to access your 11Jobs dashboard",
                                 style: const TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w400,
@@ -344,23 +385,29 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
 
                         const SizedBox(height: 24.0),
 
-                        // --- Extra Full Name Field for Sign Up ---
+                        // --- Extra Name Field for Sign Up ---
                         AnimatedSize(
                           duration: const Duration(milliseconds: 320),
                           curve: Curves.easeInOutCubic,
                           child: _isSignUp
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 16.0),
-                                  child: CustomTextField(
-                                    controller: _nameController,
-                                    hintText: "Full Name",
-                                    prefixIcon: Icons.badge_outlined,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildFieldLabel("Full Name"),
+                                      CustomTextField(
+                                        controller: _nameController,
+                                        hintText: "Enter your name",
+                                        prefixIcon: Icons.badge_outlined,
+                                      ),
+                                    ],
                                   ),
                                 )
                               : const SizedBox.shrink(),
                         ),
 
-                        // --- Field 1: User/Developer ---
+                        // --- Field 1: Company Email ---
                         AnimatedBuilder(
                           animation: _mainController,
                           builder: (context, child) {
@@ -372,17 +419,23 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                               ),
                             );
                           },
-                          child: CustomTextField(
-                            controller: _usernameController,
-                            hintText: "User/Developer",
-                            prefixIcon: Icons.person_outline_rounded,
-                            keyboardType: TextInputType.text,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildFieldLabel("Company Email"),
+                              CustomTextField(
+                                controller: _emailController,
+                                hintText: "Email",
+                                prefixIcon: Icons.mail_outline_rounded,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                            ],
                           ),
                         ),
 
                         const SizedBox(height: 16.0),
 
-                        // --- Field 2: Password ---
+                        // --- Field 2: Password with Info Icon ---
                         AnimatedBuilder(
                           animation: _mainController,
                           builder: (context, child) {
@@ -394,11 +447,17 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                               ),
                             );
                           },
-                          child: CustomTextField(
-                            controller: _passwordController,
-                            hintText: "Password",
-                            isPassword: true,
-                            prefixIcon: Icons.lock_outline_rounded,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildFieldLabel("Password", showInfo: true),
+                              CustomTextField(
+                                controller: _passwordController,
+                                hintText: "Password",
+                                isPassword: true,
+                                prefixIcon: Icons.lock_outline_rounded,
+                              ),
+                            ],
                           ),
                         ),
 
@@ -409,17 +468,78 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                           child: _isSignUp
                               ? Padding(
                                   padding: const EdgeInsets.only(top: 16.0),
-                                  child: CustomTextField(
-                                    controller: _confirmPasswordController,
-                                    hintText: "Confirm Password",
-                                    isPassword: true,
-                                    prefixIcon: Icons.lock_reset_rounded,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildFieldLabel("Confirm Password"),
+                                      CustomTextField(
+                                        controller: _confirmPasswordController,
+                                        hintText: "Confirm Password",
+                                        isPassword: true,
+                                        prefixIcon: Icons.lock_reset_rounded,
+                                      ),
+                                    ],
                                   ),
                                 )
                               : const SizedBox.shrink(),
                         ),
 
-                        const SizedBox(height: 24.0),
+                        const SizedBox(height: 10.0),
+
+                        // --- Forgot Password Link (Right Aligned, Sign In mode) ---
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 250),
+                          child: !_isSignUp
+                              ? AnimatedBuilder(
+                                  animation: _mainController,
+                                  builder: (context, child) {
+                                    return FadeTransition(
+                                      opacity: _footerAnimation,
+                                      child: child,
+                                    );
+                                  },
+                                  child: Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            backgroundColor: AppTheme.primaryBlue,
+                                            content: const Text(
+                                              "Password reset instructions sent to your email!",
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      },
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                          vertical: 6,
+                                        ),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: const Text(
+                                        "Forgot Password",
+                                        style: TextStyle(
+                                          fontSize: 13.0,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppTheme.primaryBlue,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+
+                        const SizedBox(height: 18.0),
 
                         // --- Sign In / Sign Up Button ---
                         AnimatedBuilder(
@@ -434,69 +554,15 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                             );
                           },
                           child: AnimatedSignInButton(
-                            text: _isSignUp ? "SIGN UP" : "SIGN IN",
+                            text: _isSignUp ? "Sign Up" : "Sign In",
                             isLoading: _isLoading,
                             onPressed: _handleAuth,
                           ),
                         ),
 
-                        const SizedBox(height: 16.0),
+                        const SizedBox(height: 22.0),
 
-                        // --- Forgot Password Link (Only in Sign In mode) ---
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 250),
-                          child: !_isSignUp
-                              ? AnimatedBuilder(
-                                  animation: _mainController,
-                                  builder: (context, child) {
-                                    return FadeTransition(
-                                      opacity: _footerAnimation,
-                                      child: child,
-                                    );
-                                  },
-                                  child: Center(
-                                    child: TextButton(
-                                      onPressed: () {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            backgroundColor: AppTheme.primaryBlue,
-                                            content: const Text(
-                                              "Password reset link sent!",
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                            behavior: SnackBarBehavior.floating,
-                                          ),
-                                        );
-                                      },
-                                      style: TextButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: const Text(
-                                        "Forgot Password?",
-                                        style: TextStyle(
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.primaryBlue,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-
-                        const SizedBox(height: 16.0),
-
-                        // --- Footer with responsive horizontal dividers ---
+                        // --- Footer Toggle Link: New to 11Jobs? Create New Account ---
                         AnimatedBuilder(
                           animation: _mainController,
                           builder: (context, child) {
@@ -505,55 +571,38 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                               child: child,
                             );
                           },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Expanded(
-                                child: Divider(
-                                  color: AppTheme.dividerColor,
-                                  thickness: 1,
-                                  endIndent: 8,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: _toggleMode,
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text.rich(
-                                    TextSpan(
-                                      text: _isSignUp
-                                          ? "Don't have Account? "
-                                          : "Don't have Account? ",
-                                      style: const TextStyle(
-                                        fontSize: 12.0,
-                                        color: AppTheme.textSecondary,
-                                        fontWeight: FontWeight.w500,
-                                        fontFamily: 'Roboto',
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text: _isSignUp
-                                              ? "SIGN IN"
-                                              : "SIGN UP",
-                                          style: const TextStyle(
-                                            color: AppTheme.primaryBlue,
-                                            fontWeight: FontWeight.w800,
-                                            letterSpacing: 0.3,
-                                          ),
-                                        ),
-                                      ],
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: _toggleMode,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                child: Text.rich(
+                                  TextSpan(
+                                    text: _isSignUp
+                                        ? "Already have an account? "
+                                        : "New to 11Jobs? ",
+                                    style: const TextStyle(
+                                      fontSize: 13.0,
+                                      color: AppTheme.textSecondary,
+                                      fontWeight: FontWeight.w400,
+                                      fontFamily: 'Roboto',
                                     ),
+                                    children: [
+                                      TextSpan(
+                                        text: _isSignUp
+                                            ? "Sign In"
+                                            : "Create New Account",
+                                        style: const TextStyle(
+                                          color: AppTheme.primaryBlue,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.2,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              const Expanded(
-                                child: Divider(
-                                  color: AppTheme.dividerColor,
-                                  thickness: 1,
-                                  indent: 8,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
