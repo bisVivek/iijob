@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../services/auth_storage_service.dart';
 import '../services/profile_storage_service.dart';
 import 'animated_signin_screen.dart';
 
@@ -83,6 +84,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     ]).animate(_controller);
 
     // Initialize local storage in parallel
+    AuthStorageService.init();
     ProfileStorageService.init();
 
     // Auto navigation only after the full animation completes

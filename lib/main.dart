@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/animated_signin_screen.dart';
 import 'screens/splash_screen.dart';
+import 'services/auth_storage_service.dart';
 import 'services/profile_storage_service.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AuthStorageService.init();
   await ProfileStorageService.init();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

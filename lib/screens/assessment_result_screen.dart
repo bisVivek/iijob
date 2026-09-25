@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/auth_storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand_logo.dart';
 import '../widgets/theme_switcher_button.dart';
@@ -285,10 +286,12 @@ class AssessmentResultScreen extends StatelessWidget {
                       child: ElevatedButton(
                         key: const Key('enterDashboardButton'),
                         onPressed: () {
-                          // Update user account verification state
+                          // Update user account verification state in Hive
                           if (userAccount != null) {
                             userAccount!.isVerified = true;
                             userAccount!.assessmentScore = scorePercentage;
+                            AuthStorageService.updateUser(userAccount!);
+                            AuthStorageService.saveCurrentSession(userAccount!);
                           }
                           Navigator.of(context).pushReplacement(
                             PageRouteBuilder(

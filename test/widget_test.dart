@@ -1,21 +1,31 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:_11jobs/main.dart';
+import 'package:_11jobs/models/user_account.dart';
 import 'package:_11jobs/screens/assessment_screen.dart';
 import 'package:_11jobs/screens/assessment_result_screen.dart';
 import 'package:_11jobs/screens/home_screen.dart';
 import 'package:_11jobs/screens/splash_screen.dart';
+import 'package:_11jobs/services/auth_storage_service.dart';
 import 'package:_11jobs/services/profile_storage_service.dart';
 import 'package:_11jobs/theme/app_theme.dart';
 import 'package:_11jobs/widgets/avatar_picker_modal.dart';
 import 'package:_11jobs/widgets/brand_logo.dart';
 import 'package:_11jobs/widgets/notification_center_modal.dart';
+import 'package:_11jobs/widgets/otp_input_field.dart';
 
 void main() {
+  setUpAll(() async {
+    final tempDir = Directory.systemTemp.createTempSync('hive_testing_');
+    await AuthStorageService.init(tempDir.path);
+  });
+
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     await ProfileStorageService.clearProfileImage();
+    await AuthStorageService.clearAll();
   });
 
   testWidgets('SplashScreen Launches with Signature Blue Theme and Transitions Automatically', (WidgetTester tester) async {
@@ -102,7 +112,10 @@ void main() {
     expect(find.textContaining('9876543210'), findsOneWidget);
 
     // Enter 6-digit OTP code into the 6 boxes
-    final otpTextFields = find.byType(TextField);
+    final otpTextFields = find.descendant(
+      of: find.byType(OtpInputField),
+      matching: find.byType(TextField),
+    );
     for (int i = 0; i < 6; i++) {
       await tester.enterText(otpTextFields.at(i), '${i + 1}');
     }
@@ -122,43 +135,43 @@ void main() {
     // Answer Question 1 (Correct: Option 1 -> B)
     await tester.ensureVisible(find.byKey(const Key('optionCard_1')));
     await tester.tap(find.byKey(const Key('optionCard_1')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
     await tester.tap(find.byKey(const Key('nextQuestionButton')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     // Answer Question 2 (Correct: Option 0 -> A)
     expect(find.textContaining('Question 2 of 5'), findsOneWidget);
     await tester.ensureVisible(find.byKey(const Key('optionCard_0')));
     await tester.tap(find.byKey(const Key('optionCard_0')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
     await tester.tap(find.byKey(const Key('nextQuestionButton')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     // Answer Question 3 (Correct: Option 0 -> A)
     expect(find.textContaining('Question 3 of 5'), findsOneWidget);
     await tester.ensureVisible(find.byKey(const Key('optionCard_0')));
     await tester.tap(find.byKey(const Key('optionCard_0')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
     await tester.tap(find.byKey(const Key('nextQuestionButton')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     // Answer Question 4 (Correct: Option 1 -> B)
     expect(find.textContaining('Question 4 of 5'), findsOneWidget);
     await tester.ensureVisible(find.byKey(const Key('optionCard_1')));
     await tester.tap(find.byKey(const Key('optionCard_1')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
     await tester.tap(find.byKey(const Key('nextQuestionButton')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     // Answer Question 5 (Correct: Option 1 -> B)
     expect(find.textContaining('Question 5 of 5'), findsOneWidget);
     await tester.ensureVisible(find.byKey(const Key('optionCard_1')));
     await tester.tap(find.byKey(const Key('optionCard_1')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
     await tester.tap(find.byKey(const Key('nextQuestionButton')));
     await tester.pump();
@@ -380,7 +393,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // Enter OTP
-    final otpTextFields = find.byType(TextField);
+    final otpTextFields = find.descendant(
+      of: find.byType(OtpInputField),
+      matching: find.byType(TextField),
+    );
     for (int i = 0; i < 6; i++) {
       await tester.enterText(otpTextFields.at(i), '1');
     }
@@ -397,11 +413,12 @@ void main() {
     for (int i = 0; i < 5; i++) {
       await tester.ensureVisible(find.byKey(const Key('optionCard_3')));
       await tester.tap(find.byKey(const Key('optionCard_3')));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.ensureVisible(find.byKey(const Key('nextQuestionButton')));
       await tester.tap(find.byKey(const Key('nextQuestionButton')));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
     }
+    await tester.pumpAndSettle();
 
     // Verify Incomplete / Failed Result
     expect(find.byType(AssessmentResultScreen), findsOneWidget);
@@ -414,10 +431,61 @@ void main() {
     await tester.tap(find.byKey(const Key('retakeAssessmentButton')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     // Verify we are back in Assessment Screen
     expect(find.byType(AssessmentScreen), findsOneWidget);
     expect(find.textContaining('Question 1 of 5'), findsOneWidget);
   });
+
+  testWidgets('Hive Persistence Test: Registered user persists across app restarts and can log in immediately', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    // Save a verified user directly into Hive
+    final persistentUser = UserAccount(
+      firstName: "Neha",
+      lastName: "Singh",
+      email: "neha@11jobs.com",
+      phone: "7777777777",
+      countryCode: "+1",
+      password: "Password123",
+      isVerified: true,
+      assessmentScore: 100,
+    );
+    await AuthStorageService.saveUser(persistentUser);
+
+    // "Restart" the app: pump brand new MyApp widget
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign In'), findsOneWidget);
+
+    // Enter phone and password of the persistent user
+    final phoneField = find.descendant(
+      of: find.byKey(const Key('signInPhoneField')),
+      matching: find.byType(TextField),
+    );
+    final passwordField = find.descendant(
+      of: find.byKey(const Key('signInPasswordField')),
+      matching: find.byType(TextField),
+    );
+
+    await tester.enterText(phoneField, '7777777777');
+    await tester.enterText(passwordField, 'Password123');
+    await tester.pumpAndSettle();
+
+    // Tap Sign In
+    await tester.tap(find.byKey(const Key('signInButton')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+    await tester.pumpAndSettle();
+
+    // Verify successful login into HomeScreen without needing to re-register
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.textContaining('Welcome, Neha Singh!'), findsOneWidget);
+  });
 }
+

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/user_account.dart';
+import '../services/auth_storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_corner_shapes.dart';
 import '../widgets/animated_sign_in_button.dart';
@@ -7,6 +9,8 @@ import '../widgets/custom_text_field.dart';
 import '../widgets/otp_input_field.dart';
 import 'assessment_screen.dart';
 import 'home_screen.dart';
+
+export '../models/user_account.dart';
 
 enum AuthScreenState {
   signIn,
@@ -17,32 +21,6 @@ enum AuthScreenState {
 enum SignInMode {
   phone,
   email,
-}
-
-// Model to hold registered user data
-class UserAccount {
-  final String firstName;
-  final String lastName;
-  final String email;
-  final String phone;
-  final String countryCode;
-  final String password;
-  bool isVerified;
-  int assessmentScore;
-
-  UserAccount({
-    required this.firstName,
-    required this.lastName,
-    required this.email,
-    required this.phone,
-    this.countryCode = "+1",
-    required this.password,
-    this.isVerified = false,
-    this.assessmentScore = 0,
-  });
-
-  String get fullName => "$firstName $lastName".trim();
-  String get fullPhoneNumber => "$countryCode $phone".trim();
 }
 
 class AnimatedSignInScreen extends StatefulWidget {
@@ -65,30 +43,6 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   // Screen State
   AuthScreenState _currentScreen = AuthScreenState.signIn;
   bool _isLoading = false;
-
-  // Registered Accounts Database (In-Memory Session Store)
-  static final List<UserAccount> _registeredAccounts = [
-    UserAccount(
-      firstName: "Vivek",
-      lastName: "Bisht",
-      email: "vivek5832017@gmail.com",
-      phone: "8171152213",
-      countryCode: "+91",
-      password: "Password123",
-      isVerified: true,
-      assessmentScore: 100,
-    ),
-    UserAccount(
-      firstName: "Alex",
-      lastName: "Developer",
-      email: "demo@11jobs.com",
-      phone: "9999999999",
-      countryCode: "+1",
-      password: "Password123",
-      isVerified: true,
-      assessmentScore: 100,
-    ),
-  ];
 
   // Sign In Mode (Phone with Country Code OR Email)
   SignInMode _signInMode = SignInMode.phone;
@@ -173,6 +127,10 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   }
 
   void _goToScreen(AuthScreenState screen) {
+    // Clear OTP state whenever we leave the OTP verification step
+    if (_currentScreen == AuthScreenState.signUpStep2) {
+      _enteredOtp = "";
+    }
     setState(() {
       _currentScreen = screen;
     });
@@ -250,37 +208,20 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
 
     if (_signInMode == SignInMode.phone) {
       final rawPhone = _signInPhoneController.text.trim();
-      final cleanInputDigits = rawPhone.replaceAll(RegExp(r'[^0-9]'), '');
-
-      for (final account in _registeredAccounts) {
-        final cleanAccountDigits = account.phone.replaceAll(RegExp(r'[^0-9]'), '');
-        final phoneMatch = cleanInputDigits.isNotEmpty &&
-            cleanAccountDigits.isNotEmpty &&
-            (cleanInputDigits == cleanAccountDigits ||
-                cleanInputDigits.endsWith(cleanAccountDigits) ||
-                cleanAccountDigits.endsWith(cleanInputDigits));
-
-        if (phoneMatch) {
-          foundIdentifier = true;
-          if (account.password == inputPassword) {
-            matchedUser = account;
-            break;
-          }
+      matchedUser = AuthStorageService.findUserByPhone(rawPhone);
+      if (matchedUser != null) {
+        foundIdentifier = true;
+        if (matchedUser.password != inputPassword) {
+          matchedUser = null;
         }
       }
     } else {
-      final inputEmail = _signInEmailController.text.trim().toLowerCase();
-
-      for (final account in _registeredAccounts) {
-        final emailMatch = account.email.isNotEmpty &&
-            account.email.toLowerCase() == inputEmail;
-
-        if (emailMatch) {
-          foundIdentifier = true;
-          if (account.password == inputPassword) {
-            matchedUser = account;
-            break;
-          }
+      final inputEmail = _signInEmailController.text.trim();
+      matchedUser = AuthStorageService.findUserByEmail(inputEmail);
+      if (matchedUser != null) {
+        foundIdentifier = true;
+        if (matchedUser.password != inputPassword) {
+          matchedUser = null;
         }
       }
     }
@@ -290,6 +231,8 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
     });
 
     if (matchedUser != null) {
+      await AuthStorageService.saveCurrentSession(matchedUser);
+      if (!mounted) return;
       if (matchedUser.isVerified) {
         _navigateToHome(matchedUser.fullName, score: matchedUser.assessmentScore);
       } else {
@@ -332,17 +275,15 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
     final inputEmail = _signUpEmailController.text.trim().toLowerCase();
     final cleanPhone = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
 
-    // Duplicate Email Check
-    final emailExists = _registeredAccounts.any((a) => a.email.toLowerCase() == inputEmail);
+    // Duplicate Email Check via Hive
+    final emailExists = AuthStorageService.emailExists(inputEmail);
     if (emailExists) {
       _showErrorSnackBar("This email ($inputEmail) is already registered. Please sign in instead.");
       return;
     }
 
-    // Duplicate Phone Check
-    final phoneExists = _registeredAccounts.any(
-      (a) => a.phone.replaceAll(RegExp(r'[^0-9]'), '') == cleanPhone,
-    );
+    // Duplicate Phone Check via Hive
+    final phoneExists = AuthStorageService.phoneExists(cleanPhone);
     if (phoneExists) {
       _showErrorSnackBar("This phone number is already registered. Please sign in instead.");
       return;
@@ -362,7 +303,8 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   void _handleVerifyOtp() async {
     FocusScope.of(context).unfocus();
 
-    if (_enteredOtp.trim().length < 6) {
+    final otp = _enteredOtp.trim();
+    if (otp.length < 6) {
       _showErrorSnackBar("Please enter the complete 6-digit OTP verification code.");
       return;
     }
@@ -375,7 +317,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
 
     if (!mounted) return;
 
-    // 1. Create and save new candidate account (unverified until assessment passed)
+    // 1. Create and save new candidate account to Hive persistent storage
     final newAccount = UserAccount(
       firstName: _firstNameController.text.trim().isNotEmpty
           ? _firstNameController.text.trim()
@@ -388,7 +330,10 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       isVerified: false,
       assessmentScore: 0,
     );
-    _registeredAccounts.add(newAccount);
+    await AuthStorageService.saveUser(newAccount);
+    await AuthStorageService.saveCurrentSession(newAccount);
+
+    if (!mounted) return;
 
     // 2. Pre-fill Sign In with registered credentials for future logins
     _signInMode = SignInMode.phone;
@@ -1077,9 +1022,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
               if (!emailRegex.hasMatch(value.trim())) {
                 return "Please enter a valid email (e.g. name@domain.com)";
               }
-              final isDuplicate = _registeredAccounts.any(
-                (a) => a.email.toLowerCase() == value.trim().toLowerCase(),
-              );
+              final isDuplicate = AuthStorageService.emailExists(value.trim());
               if (isDuplicate) {
                 return "This email is already registered. Please sign in.";
               }
@@ -1114,9 +1057,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
               if (cleanDigits.length < 7 || cleanDigits.length > 15) {
                 return "Enter a valid phone number (7-15 digits)";
               }
-              final isDuplicate = _registeredAccounts.any(
-                (a) => a.phone.replaceAll(RegExp(r'[^0-9]'), '') == cleanDigits,
-              );
+              final isDuplicate = AuthStorageService.phoneExists(cleanDigits);
               if (isDuplicate) {
                 return "This phone number is already registered. Please sign in.";
               }

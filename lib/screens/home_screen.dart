@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/notification_item.dart';
+import '../services/auth_storage_service.dart';
 import '../services/profile_storage_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/avatar_picker_modal.dart';
@@ -1104,11 +1105,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Candidate Hero Card with Animated Gradient Ring
+          // 1. Candidate Hero Card
           FadeSlideTransition(
             delayMs: 30,
             child: Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -1128,101 +1129,89 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
               child: Column(
                 children: [
-                  // Avatar with Interactive Photo Picker and Glow Ring
-                  InkWell(
+                  // Avatar with camera edit badge
+                  GestureDetector(
                     key: const Key('profileAvatarPickerButton'),
                     onTap: () {
                       AvatarPickerModal.show(context, candidateName: _candidateName);
                     },
-                    borderRadius: BorderRadius.circular(50),
                     child: Stack(
-                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
                       children: [
-                        PulsingBadge(
-                          glowColor: const Color(0xFF38BDF8),
-                          maxBlur: 14,
-                          child: ProfileStorageService.buildAvatarWidget(
-                            candidateName: _candidateName,
-                            radius: 40,
-                            borderColor: const Color(0xFF38BDF8),
-                          ),
+                        ProfileStorageService.buildAvatarWidget(
+                          candidateName: _candidateName,
+                          radius: 40,
+                          borderColor: Colors.white.withValues(alpha: 0.5),
                         ),
                         Positioned(
-                          bottom: 0,
-                          right: 0,
+                          bottom: -2,
+                          right: -2,
                           child: Container(
-                            padding: const EdgeInsets.all(6),
+                            width: 26,
+                            height: 26,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF005BFF),
+                              color: isDark ? const Color(0xFF334155) : const Color(0xFF003CB3),
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.25),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                             ),
-                            child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
+                            child: const Icon(
+                              Icons.camera_alt_rounded,
+                              size: 12,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   // Candidate Name
                   Text(
                     _candidateName,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
                       color: Colors.white,
+                      letterSpacing: -0.3,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 5),
 
                   // Role Designation
                   Text(
                     _candidateRole,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFBAE6FD),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.75),
+                      height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
-                  // Verification Badge (Overflow-proof using Wrap)
+                  // Verification Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFACC15),
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFACC15).withValues(alpha: 0.4),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
-                    child: const Wrap(
-                      spacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      alignment: WrapAlignment.center,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.verified_rounded, color: Color(0xFF0F172A), size: 14),
+                        Icon(Icons.verified_rounded, color: Color(0xFF1A1A1A), size: 13),
+                        SizedBox(width: 5),
                         Text(
-                          "VERIFIED CANDIDATE • 100% SCORE",
+                          'VERIFIED CANDIDATE · 100% SCORE',
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: 0.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1A1A1A),
+                            letterSpacing: 0.4,
                           ),
                         ),
                       ],
@@ -2966,7 +2955,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
               child: OutlinedButton.icon(
                 key: const Key('drawerLogoutButton'),
-                onPressed: () {
+                onPressed: () async {
+                  await AuthStorageService.clearSession();
+                  if (!mounted) return;
                   Navigator.of(context).pop();
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (_) => const AnimatedSignInScreen()),
