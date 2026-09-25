@@ -118,16 +118,13 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   if (widget.prefixWidget != null)
                     widget.prefixWidget!
                   else if (widget.prefixIcon != null)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                    Container(
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
                         color: hasError
-                            ? AppTheme.errorColor.withValues(alpha: 0.1)
-                            : (_isFocused
-                                ? AppTheme.primaryBlue.withValues(alpha: 0.12)
-                                : const Color(0xFFE8F1FD)),
+                            ? AppTheme.errorColor.withValues(alpha: 0.08)
+                            : const Color(0xFFEBF2FD),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -135,7 +132,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                         size: 18,
                         color: hasError
                             ? AppTheme.errorColor
-                            : (_isFocused ? AppTheme.primaryBlue : const Color(0xFF005BFF)),
+                            : AppTheme.primaryBlue,
                       ),
                     ),
 

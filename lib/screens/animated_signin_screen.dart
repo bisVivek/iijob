@@ -470,9 +470,9 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
     required ValueChanged<String> onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F1FD),
+        color: const Color(0xFFEBF2FD),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -480,7 +480,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
         children: [
           Text(
             selectedFlag,
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 15),
           ),
           const SizedBox(width: 4),
           DropdownButtonHideUnderline(
@@ -495,31 +495,31 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
               items: const [
                 DropdownMenuItem(
                   value: "+1",
-                  child: Text("+1", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text("+1", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 ),
                 DropdownMenuItem(
                   value: "+91",
-                  child: Text("+91", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text("+91", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 ),
                 DropdownMenuItem(
                   value: "+44",
-                  child: Text("+44", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text("+44", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 ),
                 DropdownMenuItem(
                   value: "+61",
-                  child: Text("+61", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text("+61", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 ),
                 DropdownMenuItem(
                   value: "+49",
-                  child: Text("+49", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text("+49", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 ),
                 DropdownMenuItem(
                   value: "+971",
-                  child: Text("+971", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text("+971", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 ),
                 DropdownMenuItem(
                   value: "+65",
-                  child: Text("+65", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  child: Text("+65", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                 ),
               ],
               onChanged: (val) {
@@ -538,123 +538,150 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   Widget _buildSignInModeSwitcher() {
     return Container(
       height: 44,
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3.5),
       decoration: BoxDecoration(
         color: const Color(0xFFEFF4FB),
         borderRadius: BorderRadius.circular(22),
       ),
-      child: Row(
-        children: [
-          // Phone Mode
-          Expanded(
-            child: GestureDetector(
-              key: const Key('signInModePhoneTab'),
-              onTap: () {
-                setState(() {
-                  _signInMode = SignInMode.phone;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: _signInMode == SignInMode.phone ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: _signInMode == SignInMode.phone
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.phone_iphone_rounded,
-                        size: 16,
-                        color: _signInMode == SignInMode.phone
-                            ? AppTheme.primaryBlue
-                            : AppTheme.textSecondary,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabWidth = (constraints.maxWidth - 2) / 2;
+          return Stack(
+            children: [
+              // Smooth Gliding Pill Indicator
+              AnimatedAlign(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeInOutCubic,
+                alignment: _signInMode == SignInMode.phone
+                    ? Alignment.centerLeft
+                    : Alignment.centerRight,
+                child: Container(
+                  width: tabWidth,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(19),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF005BFF).withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        "Phone Number",
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: _signInMode == SignInMode.phone
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: _signInMode == SignInMode.phone
-                              ? AppTheme.primaryBlue
-                              : AppTheme.textSecondary,
-                        ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-          ),
 
-          // Email Mode
-          Expanded(
-            child: GestureDetector(
-              key: const Key('signInModeEmailTab'),
-              onTap: () {
-                setState(() {
-                  _signInMode = SignInMode.email;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: _signInMode == SignInMode.email ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: _signInMode == SignInMode.email
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+              // Tab Buttons (Phone & Gmail)
+              Row(
+                children: [
+                  // Phone Tab
+                  Expanded(
+                    child: GestureDetector(
+                      key: const Key('signInModePhoneTab'),
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        if (_signInMode != SignInMode.phone) {
+                          setState(() {
+                            _signInMode = SignInMode.phone;
+                          });
+                        }
+                      },
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.phone_iphone_rounded,
+                                  size: 16,
+                                  color: _signInMode == SignInMode.phone
+                                      ? AppTheme.primaryBlue
+                                      : AppTheme.textSecondary,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  "Phone Number",
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontFamily: 'Roboto',
+                                    fontWeight: _signInMode == SignInMode.phone
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: _signInMode == SignInMode.phone
+                                        ? AppTheme.primaryBlue
+                                        : AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ]
-                      : null,
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.mail_outline_rounded,
-                        size: 16,
-                        color: _signInMode == SignInMode.email
-                            ? AppTheme.primaryBlue
-                            : AppTheme.textSecondary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        "Company Email",
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: _signInMode == SignInMode.email
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: _signInMode == SignInMode.email
-                              ? AppTheme.primaryBlue
-                              : AppTheme.textSecondary,
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+
+                  // Gmail Tab
+                  Expanded(
+                    child: GestureDetector(
+                      key: const Key('signInModeEmailTab'),
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        if (_signInMode != SignInMode.email) {
+                          setState(() {
+                            _signInMode = SignInMode.email;
+                          });
+                        }
+                      },
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.mail_outline_rounded,
+                                  size: 16,
+                                  color: _signInMode == SignInMode.email
+                                      ? AppTheme.primaryBlue
+                                      : AppTheme.textSecondary,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  "Gmail / Email",
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontFamily: 'Roboto',
+                                    fontWeight: _signInMode == SignInMode.email
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: _signInMode == SignInMode.email
+                                        ? AppTheme.primaryBlue
+                                        : AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -704,55 +731,84 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
 
           const SizedBox(height: 18.0),
 
-          // Phone / Email Input Field
-          if (_signInMode == SignInMode.phone) ...[
-            _buildFieldLabel("Phone Number", isRequired: true),
-            CustomTextField(
-              fieldKey: const Key('signInPhoneField'),
-              controller: _signInPhoneController,
-              hintText: "00000 00000",
-              prefixWidget: _buildCountryPicker(
-                selectedCode: _signInCountryCode,
-                selectedFlag: _signInCountryFlag,
-                onChanged: (code) {
-                  setState(() {
-                    _signInCountryCode = code;
-                    _updateCountryFlag(code, isSignIn: true);
-                  });
-                },
-              ),
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return "Please enter your registered phone number";
-                }
-                final cleanDigits = value.replaceAll(RegExp(r'[^0-9]'), '');
-                if (cleanDigits.length < 7 || cleanDigits.length > 15) {
-                  return "Enter a valid phone number (7-15 digits)";
-                }
-                return null;
-              },
-            ),
-          ] else ...[
-            _buildFieldLabel("Company Email", isRequired: true),
-            CustomTextField(
-              fieldKey: const Key('signInEmailField'),
-              controller: _signInEmailController,
-              hintText: "name@company.com",
-              prefixIcon: Icons.mail_outline_rounded,
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return "Please enter your registered email address";
-                }
-                final emailRegex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
-                if (!emailRegex.hasMatch(value.trim())) {
-                  return "Please enter a valid email address";
-                }
-                return null;
-              },
-            ),
-          ],
+          // Smooth Animated Field Transition between Phone and Gmail
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 280),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              final isPhone = child.key == const ValueKey('phoneInputSection');
+              final offsetBegin = isPhone ? const Offset(-0.06, 0) : const Offset(0.06, 0);
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: offsetBegin,
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: _signInMode == SignInMode.phone
+                ? Column(
+                    key: const ValueKey('phoneInputSection'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFieldLabel("Phone Number", isRequired: true),
+                      CustomTextField(
+                        fieldKey: const Key('signInPhoneField'),
+                        controller: _signInPhoneController,
+                        hintText: "00000 00000",
+                        prefixWidget: _buildCountryPicker(
+                          selectedCode: _signInCountryCode,
+                          selectedFlag: _signInCountryFlag,
+                          onChanged: (code) {
+                            setState(() {
+                              _signInCountryCode = code;
+                              _updateCountryFlag(code, isSignIn: true);
+                            });
+                          },
+                        ),
+                        keyboardType: TextInputType.phone,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Please enter your registered phone number";
+                          }
+                          final cleanDigits = value.replaceAll(RegExp(r'[^0-9]'), '');
+                          if (cleanDigits.length < 7 || cleanDigits.length > 15) {
+                            return "Enter a valid phone number (7-15 digits)";
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  )
+                : Column(
+                    key: const ValueKey('emailInputSection'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFieldLabel("Gmail", isRequired: true),
+                      CustomTextField(
+                        fieldKey: const Key('signInEmailField'),
+                        controller: _signInEmailController,
+                        hintText: "name@company.com",
+                        prefixIcon: Icons.mail_outline_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Please enter your registered email address";
+                          }
+                          final emailRegex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
+                          if (!emailRegex.hasMatch(value.trim())) {
+                            return "Please enter a valid email address";
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+          ),
 
           const SizedBox(height: 16.0),
 
