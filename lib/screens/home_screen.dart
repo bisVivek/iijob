@@ -5,10 +5,14 @@ import 'animated_signin_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String username;
+  final bool isVerified;
+  final int score;
 
   const HomeScreen({
     super.key,
     this.username = "User",
+    this.isVerified = true,
+    this.score = 100,
   });
 
   @override
@@ -57,88 +61,301 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(width: 12),
         ],
       ),
-      body: Center(
+      body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(28.0),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Glowing Icon Illustration
+              // Welcome & Verified Header Card
               Container(
-                width: 110,
-                height: 110,
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
                   gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFF2B78FE),
-                      Color(0xFF004BD6),
+                      Color(0xFF005BFF),
+                      Color(0xFF003CB8),
                     ],
                   ),
+                  borderRadius: BorderRadius.circular(26),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.primaryBlue.withValues(alpha: 0.35),
-                      blurRadius: 30,
-                      offset: const Offset(0, 12),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.rocket_launch_rounded,
-                  color: Colors.white,
-                  size: 52,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified_rounded, color: Colors.white, size: 14),
+                              SizedBox(width: 4),
+                              Text(
+                                "VERIFIED CANDIDATE",
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          "Score: $score%",
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      "Welcome back, $username! 👋",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Your candidate profile is fully verified for 11Jobs automated hiring pipelines.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.88),
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 22),
 
-              // Title
-              Text(
-                "Welcome to 11Jobs, $username!",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary,
-                  letterSpacing: 0.3,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Coming Soon Banner Tag
+              // Hiring Pipeline Automation Tracker Card (from 11jobs.in)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F1FD),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Text(
-                  "11JOBS DASHBOARD • COMING SOON",
-                  style: TextStyle(
-                    fontSize: 12.0,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryBlue,
-                    letterSpacing: 1.2,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.alt_route_rounded, color: AppTheme.primaryBlue, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          "Hiring Workflow Pipeline",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildPipelineStep("1. Profile & Registration", "Completed", true, true),
+                    _buildPipelineStep("2. 11Jobs Skill Assessment", "Passed ($score%)", true, true),
+                    _buildPipelineStep("3. Recruiter Pipeline Matching", "Active & Fast-Tracked", true, false),
+                    _buildPipelineStep("4. Direct Interview Stage", "Coming Next", false, false),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
-              // Subtext
-              const Text(
-                "We are crafting something amazing for your job dashboard.\nStay tuned for upcoming updates!",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14.5,
-                  color: AppTheme.textSecondary,
-                  height: 1.5,
+              // Top Matched Roles based on assessment
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            "Recommended Opportunities",
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          "11Jobs AI Match",
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primaryBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    _buildJobCard("Senior Flutter & Mobile Engineer", "11Jobs Tech Partner", "98% Match", "Remote / Hybrid"),
+                    _buildJobCard("Hiring Workflow Automation Developer", "Enterprise Scale Labs", "95% Match", "Full-time"),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPipelineStep(String title, String status, bool isDone, bool isPast) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDone ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+            ),
+            child: Icon(
+              isDone ? Icons.check : Icons.circle,
+              color: isDone ? Colors.white : const Color(0xFF94A3B8),
+              size: 14,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: isDone ? FontWeight.w700 : FontWeight.w500,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: isDone ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              status,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: isDone ? const Color(0xFF059669) : AppTheme.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildJobCard(String title, String company, String match, String type) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F1FD),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.work_outline_rounded, color: AppTheme.primaryBlue, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "$company • $type",
+                  style: const TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              match,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

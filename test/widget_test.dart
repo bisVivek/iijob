@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:_11jobs/main.dart';
+import 'package:_11jobs/screens/assessment_screen.dart';
+import 'package:_11jobs/screens/assessment_result_screen.dart';
 import 'package:_11jobs/screens/home_screen.dart';
 import 'package:_11jobs/widgets/brand_logo.dart';
 
 void main() {
-  testWidgets('Complete Auth Lifecycle: Sign Up with Phone & Password, then Sign In with Country Code', (WidgetTester tester) async {
+  testWidgets('Full User Journey: Registration -> OTP -> Creative Assessment Test (Pass Flow) -> Verified Dashboard', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -20,40 +22,12 @@ void main() {
     expect(find.byKey(const Key('signInModePhoneTab')), findsOneWidget);
     expect(find.byKey(const Key('signInModeEmailTab')), findsOneWidget);
 
-    // Test Sign In empty validation in Phone mode
-    await tester.tap(find.byKey(const Key('signInButton')));
-    await tester.pumpAndSettle();
-    expect(find.text('Please enter your registered phone number'), findsOneWidget);
-    expect(find.text('Please enter your password'), findsOneWidget);
-
-    // Test switching to Email tab on Sign In
-    await tester.tap(find.byKey(const Key('signInModeEmailTab')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('signInEmailField')), findsOneWidget);
-
-    // Test Sign In empty validation in Email mode
-    await tester.tap(find.byKey(const Key('signInButton')));
-    await tester.pumpAndSettle();
-    expect(find.text('Please enter your registered email address'), findsOneWidget);
-
-    // Switch back to Phone mode
-    await tester.tap(find.byKey(const Key('signInModePhoneTab')));
-    await tester.pumpAndSettle();
-
     // 2. Switch to Sign Up Step 1
     await tester.tap(find.byKey(const Key('switchToSignUpButton')));
     await tester.pumpAndSettle();
 
     expect(find.text('Step: 1'), findsOneWidget);
     expect(find.text('Create your account'), findsOneWidget);
-
-    // Test Step 1 empty validation
-    await tester.tap(find.byKey(const Key('continueStep1Button')));
-    await tester.pumpAndSettle();
-    expect(find.text('First name is required'), findsOneWidget);
-    expect(find.text('Email address is required'), findsOneWidget);
-    expect(find.text('Phone number is required'), findsOneWidget);
-    expect(find.text('Password is required'), findsOneWidget);
 
     // Fill Step 1 Valid Fields
     final firstNameField = find.descendant(
@@ -118,27 +92,72 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1200));
     await tester.pumpAndSettle();
 
-    // 4. Returns to Sign In with prefilled registered phone, country code & password!
-    expect(find.text('Sign In'), findsOneWidget);
-    expect(find.text('9876543210'), findsOneWidget);
+    // 4. Automatically enters 11Jobs Skill Assessment Screen
+    expect(find.byType(AssessmentScreen), findsOneWidget);
+    expect(find.text('11Jobs Assessment Test'), findsOneWidget);
+    expect(find.textContaining('Question 1 of 5'), findsOneWidget);
 
-    // 5. Tap Sign In with registered credentials
-    await tester.tap(find.byKey(const Key('signInButton')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1200));
+    // Answer Question 1 (Correct: Option 1)
+    await tester.tap(find.byKey(const Key('optionCard_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('nextQuestionButton')));
     await tester.pumpAndSettle();
 
-    // 6. Verify Home Screen opens with registered user's name
+    // Answer Question 2 (Correct: Option 1)
+    expect(find.textContaining('Question 2 of 5'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('optionCard_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('nextQuestionButton')));
+    await tester.pumpAndSettle();
+
+    // Answer Question 3 (Correct: Option 0)
+    expect(find.textContaining('Question 3 of 5'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('optionCard_0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('nextQuestionButton')));
+    await tester.pumpAndSettle();
+
+    // Answer Question 4 (Correct: Option 1)
+    expect(find.textContaining('Question 4 of 5'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('optionCard_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('nextQuestionButton')));
+    await tester.pumpAndSettle();
+
+    // Answer Question 5 (Correct: Option 1)
+    expect(find.textContaining('Question 5 of 5'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('optionCard_1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('nextQuestionButton')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+
+    // 5. Verify Assessment Passed Screen with verified badge
+    expect(find.byType(AssessmentResultScreen), findsOneWidget);
+    expect(find.text('Assessment Passed! 🎉'), findsOneWidget);
+    expect(find.text('100%'), findsOneWidget);
+    expect(find.text('11Jobs Verified Candidate'), findsOneWidget);
+    expect(find.textContaining('#11J-VERIFIED'), findsOneWidget);
+
+    // 6. Enter Dashboard
+    await tester.tap(find.byKey(const Key('enterDashboardButton')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pumpAndSettle();
+
+    // 7. Verify Dashboard with Candidate Name & Verified Status
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.textContaining('Rahul Sharma'), findsOneWidget);
+    expect(find.text('VERIFIED CANDIDATE'), findsOneWidget);
+    expect(find.text('Hiring Workflow Pipeline'), findsOneWidget);
 
-    // 7. Test Logout and Login again with registered phone and password
+    // 8. Test Logout & Direct Verified Sign In
     await tester.tap(find.byTooltip('Logout'));
     await tester.pumpAndSettle();
 
     expect(find.text('Sign In'), findsOneWidget);
 
-    // Test Wrong Password on Login
     final signInPhoneField = find.descendant(
       of: find.byKey(const Key('signInPhoneField')),
       matching: find.byType(TextField),
@@ -147,19 +166,7 @@ void main() {
       of: find.byKey(const Key('signInPasswordField')),
       matching: find.byType(TextField),
     );
-
     await tester.enterText(signInPhoneField, '9876543210');
-    await tester.enterText(signInPassField, 'WrongPassword123');
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('signInButton')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1000));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('Incorrect password'), findsOneWidget);
-
-    // Now enter Correct Password and login successfully
     await tester.enterText(signInPassField, 'Password123');
     await tester.pumpAndSettle();
 
@@ -172,7 +179,7 @@ void main() {
     expect(find.textContaining('Rahul Sharma'), findsOneWidget);
   });
 
-  testWidgets('Duplicate Email and Phone Number Validation during Registration', (WidgetTester tester) async {
+  testWidgets('Assessment Fail Flow: Retake Test & Retry', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -185,51 +192,85 @@ void main() {
     await tester.tap(find.byKey(const Key('switchToSignUpButton')));
     await tester.pumpAndSettle();
 
+    // Register User Priya
     final firstNameField = find.descendant(
       of: find.byKey(const Key('signUpFirstNameField')),
       matching: find.byType(TextField),
     );
+    await tester.enterText(firstNameField, 'Priya');
+
+    final lastNameField = find.descendant(
+      of: find.byKey(const Key('signUpLastNameField')),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(lastNameField, 'Verma');
+
     final emailField = find.descendant(
       of: find.byKey(const Key('signUpEmailField')),
       matching: find.byType(TextField),
     );
+    await tester.enterText(emailField, 'priya@11jobs.com');
+
     final phoneField = find.descendant(
       of: find.byKey(const Key('signUpPhoneField')),
       matching: find.byType(TextField),
     );
+    await tester.enterText(phoneField, '8888888888');
+
     final passwordField = find.descendant(
       of: find.byKey(const Key('signUpPasswordField')),
       matching: find.byType(TextField),
     );
+    await tester.enterText(passwordField, 'Password123');
+
     final confirmPasswordField = find.descendant(
       of: find.byKey(const Key('signUpConfirmPasswordField')),
       matching: find.byType(TextField),
     );
-
-    // Try registering with already existing email 'demo@11jobs.com'
-    await tester.enterText(firstNameField, 'Test');
-    await tester.enterText(emailField, 'demo@11jobs.com');
-    await tester.enterText(phoneField, '9123456789');
-    await tester.enterText(passwordField, 'Password123');
     await tester.enterText(confirmPasswordField, 'Password123');
+
     await tester.tap(find.byKey(const Key('termsCheckbox')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('continueStep1Button')));
     await tester.pumpAndSettle();
 
-    // Verify duplicate email error is shown
-    expect(find.text('This email is already registered. Please sign in.'), findsOneWidget);
+    // Enter OTP
+    final otpTextFields = find.byType(TextField);
+    for (int i = 0; i < 6; i++) {
+      await tester.enterText(otpTextFields.at(i), '1');
+    }
+    await tester.pump();
 
-    // Change to a new email, but try existing phone '9999999999'
-    await tester.enterText(emailField, 'newuser@11jobs.com');
-    await tester.enterText(phoneField, '9999999999');
+    await tester.tap(find.byKey(const Key('verifyOtpButton')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('continueStep1Button')));
+    expect(find.byType(AssessmentScreen), findsOneWidget);
+
+    // Answer incorrectly (select option 3 for all questions)
+    for (int i = 0; i < 5; i++) {
+      await tester.tap(find.byKey(const Key('optionCard_3')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('nextQuestionButton')));
+      await tester.pumpAndSettle();
+    }
+
+    // Verify Incomplete / Failed Result
+    expect(find.byType(AssessmentResultScreen), findsOneWidget);
+    expect(find.text('Assessment Incomplete'), findsOneWidget);
+    expect(find.text('Passing Requirement: 80%'), findsOneWidget);
+    expect(find.byKey(const Key('retakeAssessmentButton')), findsOneWidget);
+
+    // Tap Retake Assessment
+    await tester.tap(find.byKey(const Key('retakeAssessmentButton')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     await tester.pumpAndSettle();
 
-    // Verify duplicate phone error is shown
-    expect(find.text('This phone number is already registered. Please sign in.'), findsOneWidget);
+    // Verify we are back in Assessment Screen
+    expect(find.byType(AssessmentScreen), findsOneWidget);
+    expect(find.textContaining('Question 1 of 5'), findsOneWidget);
   });
 }

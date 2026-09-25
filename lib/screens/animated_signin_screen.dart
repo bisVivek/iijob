@@ -5,6 +5,7 @@ import '../widgets/animated_sign_in_button.dart';
 import '../widgets/brand_logo.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/otp_input_field.dart';
+import 'assessment_screen.dart';
 import 'home_screen.dart';
 
 enum AuthScreenState {
@@ -26,6 +27,8 @@ class UserAccount {
   final String phone;
   final String countryCode;
   final String password;
+  bool isVerified;
+  int assessmentScore;
 
   UserAccount({
     required this.firstName,
@@ -34,6 +37,8 @@ class UserAccount {
     required this.phone,
     this.countryCode = "+1",
     required this.password,
+    this.isVerified = false,
+    this.assessmentScore = 0,
   });
 
   String get fullName => "$firstName $lastName".trim();
@@ -70,6 +75,8 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       phone: "9999999999",
       countryCode: "+1",
       password: "Password123",
+      isVerified: true,
+      assessmentScore: 100,
     ),
   ];
 
@@ -273,7 +280,24 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
     });
 
     if (matchedUser != null) {
-      _navigateToHome(matchedUser.fullName);
+      if (matchedUser.isVerified) {
+        _navigateToHome(matchedUser.fullName, score: matchedUser.assessmentScore);
+      } else {
+        _showErrorSnackBar("Please complete and pass your skill assessment to unlock the dashboard.");
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 550),
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                AssessmentScreen(
+              candidateName: matchedUser!.fullName,
+              userAccount: matchedUser,
+            ),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        );
+      }
     } else if (foundIdentifier) {
       _showErrorSnackBar("Incorrect password. Please verify your password and try again.");
     } else {
@@ -323,7 +347,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   }
 
   // ==========================================
-  // STEP 2: OTP VERIFICATION & AUTO-FILL SIGN IN
+  // STEP 2: OTP VERIFICATION & DIRECT ASSESSMENT TEST
   // ==========================================
   void _handleVerifyOtp() async {
     FocusScope.of(context).unfocus();
@@ -341,7 +365,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
 
     if (!mounted) return;
 
-    // 1. Create and save new account
+    // 1. Create and save new candidate account (unverified until assessment passed)
     final newAccount = UserAccount(
       firstName: _firstNameController.text.trim().isNotEmpty
           ? _firstNameController.text.trim()
@@ -351,10 +375,12 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       phone: _phoneController.text.trim(),
       countryCode: _selectedCountryCode,
       password: _signUpPasswordController.text,
+      isVerified: false,
+      assessmentScore: 0,
     );
     _registeredAccounts.add(newAccount);
 
-    // 2. Pre-fill Sign In with registered credentials
+    // 2. Pre-fill Sign In with registered credentials for future logins
     _signInMode = SignInMode.phone;
     _signInCountryCode = newAccount.countryCode;
     _updateCountryFlag(_signInCountryCode, isSignIn: true);
@@ -365,12 +391,23 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
 
     setState(() {
       _isLoading = false;
-      _currentScreen = AuthScreenState.signIn;
     });
 
-    // 3. Show success notification
-    _showSuccessSnackBar(
-      "Registration complete! Sign in with your phone (${newAccount.countryCode} ${newAccount.phone}) and password.",
+    _showSuccessSnackBar("OTP verified! Starting your 11Jobs Skill Assessment.");
+
+    // 3. Navigate directly to the 11Jobs Skill Assessment Test
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 550),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            AssessmentScreen(
+          candidateName: newAccount.fullName,
+          userAccount: newAccount,
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
     );
   }
 
@@ -393,12 +430,12 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
     }
   }
 
-  void _navigateToHome(String name) {
+  void _navigateToHome(String name, {int score = 100}) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 550),
         pageBuilder: (context, animation, secondaryAnimation) =>
-            HomeScreen(username: name),
+            HomeScreen(username: name, isVerified: true, score: score),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

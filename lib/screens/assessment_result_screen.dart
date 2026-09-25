@@ -1,0 +1,435 @@
+import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+import '../widgets/brand_logo.dart';
+import 'home_screen.dart';
+import 'animated_signin_screen.dart';
+import 'assessment_screen.dart';
+
+class AssessmentResultScreen extends StatelessWidget {
+  final String candidateName;
+  final int totalQuestions;
+  final int correctCount;
+  final UserAccount? userAccount;
+
+  const AssessmentResultScreen({
+    super.key,
+    required this.candidateName,
+    required this.totalQuestions,
+    required this.correctCount,
+    this.userAccount,
+  });
+
+  bool get isPassed => (correctCount / totalQuestions) >= 0.8;
+  int get scorePercentage => ((correctCount / totalQuestions) * 100).round();
+
+  @override
+  Widget build(BuildContext context) {
+    final verifiedId = "11J-VERIFIED-${(candidateName.hashCode.abs() % 9000 + 1000)}";
+
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        title: const BrandLogo(height: 24),
+        automaticallyImplyLeading: false,
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 460),
+              padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 32.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: isPassed
+                        ? const Color(0xFF005BFF).withValues(alpha: 0.12)
+                        : const Color(0xFFEF4444).withValues(alpha: 0.08),
+                    blurRadius: 36,
+                    offset: const Offset(0, 14),
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Status Icon with Radial Halo
+                  Center(
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: isPassed
+                              ? [const Color(0xFF10B981), const Color(0xFF059669)]
+                              : [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isPassed
+                                ? const Color(0xFF10B981).withValues(alpha: 0.35)
+                                : const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        isPassed ? Icons.verified_rounded : Icons.replay_rounded,
+                        color: Colors.white,
+                        size: 48,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // Title
+                  Text(
+                    isPassed ? "Assessment Passed! 🎉" : "Assessment Incomplete",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Candidate Greeting & Subtitle
+                  Text(
+                    isPassed
+                        ? "Congratulations, $candidateName! You have successfully verified your profile."
+                        : "Nice try, $candidateName! An 80% passing score is required to unlock full access.",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // Score Metric Banner
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: isPassed ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isPassed ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildMetric("SCORE", "$scorePercentage%"),
+                        Container(width: 1, height: 36, color: Colors.grey.withValues(alpha: 0.3)),
+                        _buildMetric("CORRECT", "$correctCount / $totalQuestions"),
+                        Container(width: 1, height: 36, color: Colors.grey.withValues(alpha: 0.3)),
+                        _buildMetric("STATUS", isPassed ? "VERIFIED" : "PENDING"),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Verified Candidate Badge Card (Only if Passed)
+                  if (isPassed) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F6FF),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.workspace_premium_rounded,
+                                color: AppTheme.primaryBlue,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  "11Jobs Verified Candidate",
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primaryBlue,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                "#$verifiedId",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          _buildUnlockItem("Verified badge displayed on your recruiter profile"),
+                          _buildUnlockItem("Unlocked access to 11Jobs Dashboard & job applications"),
+                          _buildUnlockItem("Priority AI pipeline placement for high-match roles"),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 26),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.info_outline_rounded, color: AppTheme.errorColor, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                "Passing Requirement: 80%",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.errorColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            "Top companies on 11Jobs seek candidates with demonstrated logic & engineering problem solving. Review your answers and try again!",
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF7F1D1D),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 26),
+                  ],
+
+                  // Action Buttons
+                  if (isPassed) ...[
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        key: const Key('enterDashboardButton'),
+                        onPressed: () {
+                          // Update user account verification state
+                          if (userAccount != null) {
+                            userAccount!.isVerified = true;
+                            userAccount!.assessmentScore = scorePercentage;
+                          }
+                          Navigator.of(context).pushReplacement(
+                            PageRouteBuilder(
+                              transitionDuration: const Duration(milliseconds: 550),
+                              pageBuilder: (context, animation, secondaryAnimation) =>
+                                  HomeScreen(
+                                username: candidateName,
+                                isVerified: true,
+                                score: scorePercentage,
+                              ),
+                              transitionsBuilder:
+                                  (context, animation, secondaryAnimation, child) {
+                                return FadeTransition(opacity: animation, child: child);
+                              },
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryBlue,
+                          elevation: 4,
+                          shadowColor: AppTheme.primaryBlue.withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(26),
+                          ),
+                        ),
+                        child: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "ENTER 11JOBS DASHBOARD",
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    // Retake Assessment Button
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        key: const Key('retakeAssessmentButton'),
+                        onPressed: () {
+                          Navigator.of(context).pushReplacement(
+                            PageRouteBuilder(
+                              transitionDuration: const Duration(milliseconds: 400),
+                              pageBuilder: (context, animation, secondaryAnimation) =>
+                                  AssessmentScreen(
+                                candidateName: candidateName,
+                                userAccount: userAccount,
+                              ),
+                              transitionsBuilder:
+                                  (context, animation, secondaryAnimation, child) {
+                                return FadeTransition(opacity: animation, child: child);
+                              },
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryBlue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.refresh_rounded, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              "RETAKE ASSESSMENT",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Back to Sign In Button
+                    SizedBox(
+                      height: 48,
+                      child: OutlinedButton(
+                        key: const Key('backToSignInFromFailedTestButton'),
+                        onPressed: () {
+                          Navigator.of(context).pushReplacement(
+                            PageRouteBuilder(
+                              transitionDuration: const Duration(milliseconds: 400),
+                              pageBuilder: (context, animation, secondaryAnimation) =>
+                                  const AnimatedSignInScreen(),
+                              transitionsBuilder:
+                                  (context, animation, secondaryAnimation, child) {
+                                return FadeTransition(opacity: animation, child: child);
+                              },
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                        ),
+                        child: const Text(
+                          "Back to Sign In",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetric(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textSecondary,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUnlockItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2.0),
+            child: Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 15),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 12.5, color: AppTheme.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
