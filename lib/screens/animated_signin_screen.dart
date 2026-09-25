@@ -4,7 +4,41 @@ import '../widgets/animated_corner_shapes.dart';
 import '../widgets/animated_sign_in_button.dart';
 import '../widgets/brand_logo.dart';
 import '../widgets/custom_text_field.dart';
+import '../widgets/otp_input_field.dart';
 import 'home_screen.dart';
+
+enum AuthScreenState {
+  signIn,
+  signUpStep1,
+  signUpStep2,
+}
+
+enum SignInMode {
+  phone,
+  email,
+}
+
+// Model to hold registered user data
+class UserAccount {
+  final String firstName;
+  final String lastName;
+  final String email;
+  final String phone;
+  final String countryCode;
+  final String password;
+
+  UserAccount({
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+    required this.phone,
+    this.countryCode = "+1",
+    required this.password,
+  });
+
+  String get fullName => "$firstName $lastName".trim();
+  String get fullPhoneNumber => "$countryCode $phone".trim();
+}
 
 class AnimatedSignInScreen extends StatefulWidget {
   const AnimatedSignInScreen({super.key});
@@ -17,68 +51,84 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _mainController;
 
-  // Staggered Entrance Animations (Plays only once on startup)
+  // Staggered Entrance Animations (Runs once on launch)
   late Animation<double> _cornerShapesAnimation;
   late Animation<double> _cardScaleAnimation;
   late Animation<double> _cardFadeAnimation;
   late Animation<Offset> _cardSlideAnimation;
-  late Animation<double> _logoFadeAnimation;
-  late Animation<Offset> _logoSlideAnimation;
-  late Animation<double> _titleFadeAnimation;
-  late Animation<Offset> _titleSlideAnimation;
-  late Animation<double> _field1Animation;
-  late Animation<Offset> _field1SlideAnimation;
-  late Animation<double> _field2Animation;
-  late Animation<Offset> _field2SlideAnimation;
-  late Animation<double> _buttonAnimation;
-  late Animation<Offset> _buttonSlideAnimation;
-  late Animation<double> _footerAnimation;
 
-  // Mode: Sign In vs Sign Up
-  bool _isSignUp = false;
+  // Screen State
+  AuthScreenState _currentScreen = AuthScreenState.signIn;
   bool _isLoading = false;
 
-  // Form & Controllers
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  // Registered Accounts Database (In-Memory Session Store)
+  static final List<UserAccount> _registeredAccounts = [
+    UserAccount(
+      firstName: "Alex",
+      lastName: "Developer",
+      email: "demo@11jobs.com",
+      phone: "9999999999",
+      countryCode: "+1",
+      password: "Password123",
+    ),
+  ];
+
+  // Sign In Mode (Phone with Country Code OR Email)
+  SignInMode _signInMode = SignInMode.phone;
+  String _signInCountryCode = "+1";
+  String _signInCountryFlag = "🇺🇸";
+
+  // Sign In Controllers & Keys
+  final _signInFormKey = GlobalKey<FormState>();
+  final _signInPhoneController = TextEditingController();
+  final _signInEmailController = TextEditingController();
+  final _signInPasswordController = TextEditingController();
+
+  // Sign Up Step 1 Controllers & Keys
+  final _step1FormKey = GlobalKey<FormState>();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _signUpEmailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _signUpPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _termsAgreed = false;
+  String _selectedCountryCode = "+1";
+  String _selectedCountryFlag = "🇺🇸";
+
+  // Step 2: OTP State
+  String _enteredOtp = "";
 
   @override
   void initState() {
     super.initState();
+    // One-time smooth entrance animation on initial app open
     _mainController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1100),
     );
 
-    _setupAnimations();
-    _mainController.forward();
-  }
-
-  void _setupAnimations() {
-    // 1. Background corner shapes
     _cornerShapesAnimation = CurvedAnimation(
       parent: _mainController,
       curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack),
     );
 
-    // 2. White Card Container
-    _cardScaleAnimation = Tween<double>(begin: 0.90, end: 1.0).animate(
+    _cardScaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
       CurvedAnimation(
         parent: _mainController,
         curve: const Interval(0.15, 0.65, curve: Curves.easeOutBack),
       ),
     );
+
     _cardFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _mainController,
         curve: const Interval(0.15, 0.55, curve: Curves.easeOut),
       ),
     );
+
     _cardSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
+      begin: const Offset(0, 0.18),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
@@ -87,157 +137,284 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       ),
     );
 
-    // 3. 11Jobs Logo
-    _logoFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.25, 0.65, curve: Curves.easeOut),
-      ),
-    );
-    _logoSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.25, 0.65, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    // 4. Title & Subtitle
-    _titleFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.35, 0.70, curve: Curves.easeOut),
-      ),
-    );
-    _titleSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, -0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.35, 0.70, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    // 5. Input Fields
-    _field1Animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.45, 0.80, curve: Curves.easeOut),
-      ),
-    );
-    _field1SlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.45, 0.80, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    _field2Animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.55, 0.88, curve: Curves.easeOut),
-      ),
-    );
-    _field2SlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.55, 0.88, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    // 6. Action Button
-    _buttonAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.65, 0.95, curve: Curves.easeOutBack),
-      ),
-    );
-    _buttonSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.35),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.65, 0.95, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    // 7. Footer Links
-    _footerAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.75, 1.0, curve: Curves.easeOut),
-      ),
-    );
+    _mainController.forward();
   }
 
   @override
   void dispose() {
     _mainController.dispose();
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _signInPhoneController.dispose();
+    _signInEmailController.dispose();
+    _signInPasswordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _signUpEmailController.dispose();
+    _phoneController.dispose();
+    _signUpPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _toggleMode() {
+  void _goToScreen(AuthScreenState screen) {
     setState(() {
-      _isSignUp = !_isSignUp;
+      _currentScreen = screen;
     });
   }
 
-  void _handleAuth() async {
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppTheme.errorColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppTheme.successColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // SIGN IN VALIDATION & SUBMISSION
+  // ==========================================
+  void _handleSignIn() async {
     FocusScope.of(context).unfocus();
+
+    if (!_signInFormKey.currentState!.validate()) {
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
-    // Simulating authentication delay
-    await Future.delayed(const Duration(milliseconds: 900));
+    await Future.delayed(const Duration(milliseconds: 700));
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+    if (!mounted) return;
 
-      final displayName = _isSignUp
-          ? (_nameController.text.trim().isNotEmpty
-              ? _nameController.text.trim()
-              : "11Jobs User")
-          : (_emailController.text.trim().isNotEmpty
-              ? _emailController.text.trim().split('@').first
-              : "11Jobs User");
+    final inputPassword = _signInPasswordController.text;
+    UserAccount? matchedUser;
+    bool foundIdentifier = false;
 
-      // Navigate to blank Coming Soon Home Screen
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 550),
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              HomeScreen(username: displayName),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-        ),
-      );
+    if (_signInMode == SignInMode.phone) {
+      final rawPhone = _signInPhoneController.text.trim();
+      final cleanInputDigits = rawPhone.replaceAll(RegExp(r'[^0-9]'), '');
+
+      for (final account in _registeredAccounts) {
+        final cleanAccountDigits = account.phone.replaceAll(RegExp(r'[^0-9]'), '');
+        final phoneMatch = cleanInputDigits.isNotEmpty &&
+            cleanAccountDigits.isNotEmpty &&
+            (cleanInputDigits == cleanAccountDigits ||
+                cleanInputDigits.endsWith(cleanAccountDigits) ||
+                cleanAccountDigits.endsWith(cleanInputDigits));
+
+        if (phoneMatch) {
+          foundIdentifier = true;
+          if (account.password == inputPassword) {
+            matchedUser = account;
+            break;
+          }
+        }
+      }
+    } else {
+      final inputEmail = _signInEmailController.text.trim().toLowerCase();
+
+      for (final account in _registeredAccounts) {
+        final emailMatch = account.email.isNotEmpty &&
+            account.email.toLowerCase() == inputEmail;
+
+        if (emailMatch) {
+          foundIdentifier = true;
+          if (account.password == inputPassword) {
+            matchedUser = account;
+            break;
+          }
+        }
+      }
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (matchedUser != null) {
+      _navigateToHome(matchedUser.fullName);
+    } else if (foundIdentifier) {
+      _showErrorSnackBar("Incorrect password. Please verify your password and try again.");
+    } else {
+      if (_signInMode == SignInMode.phone) {
+        _showErrorSnackBar("No account found with phone $_signInCountryCode ${_signInPhoneController.text.trim()}. Please sign up first.");
+      } else {
+        _showErrorSnackBar("No account found with email ${_signInEmailController.text.trim()}. Please sign up first.");
+      }
     }
   }
 
-  Widget _buildFieldLabel(String label, {bool showInfo = false}) {
+  // ==========================================
+  // STEP 1 VALIDATION & CONTINUE
+  // ==========================================
+  void _handleContinueStep1() {
+    FocusScope.of(context).unfocus();
+
+    if (!_step1FormKey.currentState!.validate()) {
+      return;
+    }
+
+    final inputEmail = _signUpEmailController.text.trim().toLowerCase();
+    final cleanPhone = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Duplicate Email Check
+    final emailExists = _registeredAccounts.any((a) => a.email.toLowerCase() == inputEmail);
+    if (emailExists) {
+      _showErrorSnackBar("This email ($inputEmail) is already registered. Please sign in instead.");
+      return;
+    }
+
+    // Duplicate Phone Check
+    final phoneExists = _registeredAccounts.any(
+      (a) => a.phone.replaceAll(RegExp(r'[^0-9]'), '') == cleanPhone,
+    );
+    if (phoneExists) {
+      _showErrorSnackBar("This phone number is already registered. Please sign in instead.");
+      return;
+    }
+
+    if (!_termsAgreed) {
+      _showErrorSnackBar("Please agree to the Terms & Conditions to continue.");
+      return;
+    }
+
+    _goToScreen(AuthScreenState.signUpStep2);
+  }
+
+  // ==========================================
+  // STEP 2: OTP VERIFICATION & AUTO-FILL SIGN IN
+  // ==========================================
+  void _handleVerifyOtp() async {
+    FocusScope.of(context).unfocus();
+
+    if (_enteredOtp.trim().length < 6) {
+      _showErrorSnackBar("Please enter the complete 6-digit OTP verification code.");
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    if (!mounted) return;
+
+    // 1. Create and save new account
+    final newAccount = UserAccount(
+      firstName: _firstNameController.text.trim().isNotEmpty
+          ? _firstNameController.text.trim()
+          : "User",
+      lastName: _lastNameController.text.trim(),
+      email: _signUpEmailController.text.trim(),
+      phone: _phoneController.text.trim(),
+      countryCode: _selectedCountryCode,
+      password: _signUpPasswordController.text,
+    );
+    _registeredAccounts.add(newAccount);
+
+    // 2. Pre-fill Sign In with registered credentials
+    _signInMode = SignInMode.phone;
+    _signInCountryCode = newAccount.countryCode;
+    _updateCountryFlag(_signInCountryCode, isSignIn: true);
+
+    _signInPhoneController.text = newAccount.phone;
+    _signInEmailController.text = newAccount.email;
+    _signInPasswordController.text = newAccount.password;
+
+    setState(() {
+      _isLoading = false;
+      _currentScreen = AuthScreenState.signIn;
+    });
+
+    // 3. Show success notification
+    _showSuccessSnackBar(
+      "Registration complete! Sign in with your phone (${newAccount.countryCode} ${newAccount.phone}) and password.",
+    );
+  }
+
+  void _updateCountryFlag(String code, {bool isSignIn = false}) {
+    const flagMap = {
+      "+1": "🇺🇸",
+      "+91": "🇮🇳",
+      "+44": "🇬🇧",
+      "+61": "🇦🇺",
+      "+49": "🇩🇪",
+      "+971": "🇦🇪",
+      "+65": "🇸🇬",
+    };
+    final flag = flagMap[code] ?? "🇺🇸";
+
+    if (isSignIn) {
+      _signInCountryFlag = flag;
+    } else {
+      _selectedCountryFlag = flag;
+    }
+  }
+
+  void _navigateToHome(String name) {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 550),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            HomeScreen(username: name),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(
+    String label, {
+    bool isRequired = false,
+    String? optionalText,
+    bool showInfo = false,
+    String? infoMessage,
+  }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.only(bottom: 6.0),
       child: Row(
         children: [
           Text(
@@ -248,19 +425,1019 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
               color: AppTheme.textPrimary,
             ),
           ),
+          if (isRequired) ...[
+            const SizedBox(width: 3),
+            const Text(
+              "*",
+              style: TextStyle(
+                color: AppTheme.errorColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ],
+          if (optionalText != null) ...[
+            const SizedBox(width: 4),
+            Text(
+              "($optionalText)",
+              style: const TextStyle(
+                fontSize: 12.0,
+                color: AppTheme.textSecondary,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
           if (showInfo) ...[
             const SizedBox(width: 4),
             Tooltip(
-              message: "Must be at least 6 characters",
-              child: Icon(
+              message: infoMessage ?? "Minimum 8 characters required",
+              child: const Icon(
                 Icons.info_outline_rounded,
                 size: 15,
-                color: AppTheme.textSecondary.withValues(alpha: 0.8),
+                color: AppTheme.textSecondary,
               ),
             ),
           ],
         ],
       ),
+    );
+  }
+
+  // Country Code Picker Widget
+  Widget _buildCountryPicker({
+    required String selectedCode,
+    required String selectedFlag,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F1FD),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            selectedFlag,
+            style: const TextStyle(fontSize: 16),
+          ),
+          const SizedBox(width: 4),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: selectedCode,
+              isDense: true,
+              icon: const Icon(
+                Icons.unfold_more_rounded,
+                size: 16,
+                color: AppTheme.primaryBlue,
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: "+1",
+                  child: Text("+1", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+                DropdownMenuItem(
+                  value: "+91",
+                  child: Text("+91", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+                DropdownMenuItem(
+                  value: "+44",
+                  child: Text("+44", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+                DropdownMenuItem(
+                  value: "+61",
+                  child: Text("+61", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+                DropdownMenuItem(
+                  value: "+49",
+                  child: Text("+49", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+                DropdownMenuItem(
+                  value: "+971",
+                  child: Text("+971", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+                DropdownMenuItem(
+                  value: "+65",
+                  child: Text("+65", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
+              ],
+              onChanged: (val) {
+                if (val != null) {
+                  onChanged(val);
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Sign In Mode Switcher (Phone with Country Code vs Email)
+  Widget _buildSignInModeSwitcher() {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF4FB),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Row(
+        children: [
+          // Phone Mode
+          Expanded(
+            child: GestureDetector(
+              key: const Key('signInModePhoneTab'),
+              onTap: () {
+                setState(() {
+                  _signInMode = SignInMode.phone;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: _signInMode == SignInMode.phone ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: _signInMode == SignInMode.phone
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.phone_iphone_rounded,
+                        size: 16,
+                        color: _signInMode == SignInMode.phone
+                            ? AppTheme.primaryBlue
+                            : AppTheme.textSecondary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "Phone Number",
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: _signInMode == SignInMode.phone
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _signInMode == SignInMode.phone
+                              ? AppTheme.primaryBlue
+                              : AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Email Mode
+          Expanded(
+            child: GestureDetector(
+              key: const Key('signInModeEmailTab'),
+              onTap: () {
+                setState(() {
+                  _signInMode = SignInMode.email;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: _signInMode == SignInMode.email ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: _signInMode == SignInMode.email
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.mail_outline_rounded,
+                        size: 16,
+                        color: _signInMode == SignInMode.email
+                            ? AppTheme.primaryBlue
+                            : AppTheme.textSecondary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "Company Email",
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: _signInMode == SignInMode.email
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _signInMode == SignInMode.email
+                              ? AppTheme.primaryBlue
+                              : AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // VIEW: 1. SIGN IN (With Country Code & Full Validation)
+  // ==========================================
+  Widget _buildSignInView() {
+    return Form(
+      key: _signInFormKey,
+      child: Column(
+        key: const ValueKey('SignInView'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 11Jobs Logo
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: BrandLogo(height: 28),
+          ),
+
+          const SizedBox(height: 20.0),
+
+          // Title & Subtitle
+          const Text(
+            "Sign In",
+            style: TextStyle(
+              fontSize: 26.0,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: 6.0),
+          const Text(
+            "Login to access your 11Jobs dashboard",
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w400,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 20.0),
+
+          // Login Mode Switcher (Phone / Email)
+          _buildSignInModeSwitcher(),
+
+          const SizedBox(height: 18.0),
+
+          // Phone / Email Input Field
+          if (_signInMode == SignInMode.phone) ...[
+            _buildFieldLabel("Phone Number", isRequired: true),
+            CustomTextField(
+              fieldKey: const Key('signInPhoneField'),
+              controller: _signInPhoneController,
+              hintText: "00000 00000",
+              prefixWidget: _buildCountryPicker(
+                selectedCode: _signInCountryCode,
+                selectedFlag: _signInCountryFlag,
+                onChanged: (code) {
+                  setState(() {
+                    _signInCountryCode = code;
+                    _updateCountryFlag(code, isSignIn: true);
+                  });
+                },
+              ),
+              keyboardType: TextInputType.phone,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return "Please enter your registered phone number";
+                }
+                final cleanDigits = value.replaceAll(RegExp(r'[^0-9]'), '');
+                if (cleanDigits.length < 7 || cleanDigits.length > 15) {
+                  return "Enter a valid phone number (7-15 digits)";
+                }
+                return null;
+              },
+            ),
+          ] else ...[
+            _buildFieldLabel("Company Email", isRequired: true),
+            CustomTextField(
+              fieldKey: const Key('signInEmailField'),
+              controller: _signInEmailController,
+              hintText: "name@company.com",
+              prefixIcon: Icons.mail_outline_rounded,
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return "Please enter your registered email address";
+                }
+                final emailRegex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
+                if (!emailRegex.hasMatch(value.trim())) {
+                  return "Please enter a valid email address";
+                }
+                return null;
+              },
+            ),
+          ],
+
+          const SizedBox(height: 16.0),
+
+          // Password
+          _buildFieldLabel(
+            "Password",
+            isRequired: true,
+            showInfo: true,
+            infoMessage: "Enter your account password",
+          ),
+          CustomTextField(
+            fieldKey: const Key('signInPasswordField'),
+            controller: _signInPasswordController,
+            hintText: "Password",
+            isPassword: true,
+            prefixIcon: Icons.lock_outline_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return "Please enter your password";
+              }
+              if (value.length < 6) {
+                return "Password must be at least 6 characters";
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 10.0),
+
+          // Forgot Password Link
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: AppTheme.primaryBlue,
+                    content: const Text("Password reset instructions sent to your email/phone!"),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                "Forgot Password",
+                style: TextStyle(
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryBlue,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 18.0),
+
+          // Sign In Button
+          AnimatedSignInButton(
+            key: const Key('signInButton'),
+            text: "Sign In",
+            isLoading: _isLoading,
+            onPressed: _handleSignIn,
+          ),
+
+          const SizedBox(height: 22.0),
+
+          // Switch to Register Step 1
+          Center(
+            child: GestureDetector(
+              key: const Key('switchToSignUpButton'),
+              onTap: () => _goToScreen(AuthScreenState.signUpStep1),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Text.rich(
+                  const TextSpan(
+                    text: "New to 11Jobs? ",
+                    style: TextStyle(
+                      fontSize: 13.0,
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Roboto',
+                    ),
+                    children: [
+                      TextSpan(
+                        text: "Create New Account",
+                        style: TextStyle(
+                          color: AppTheme.primaryBlue,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // VIEW: 2. REGISTRATION STEP 1 (With Full Validation & Duplicate Checks)
+  // ==========================================
+  Widget _buildSignUpStep1View() {
+    return Form(
+      key: _step1FormKey,
+      child: Column(
+        key: const ValueKey('SignUpStep1View'),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 11Jobs Logo & Step Indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const BrandLogo(height: 26),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F1FD),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  "STEP 1 OF 2",
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryBlue,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16.0),
+
+          // Title & Subtitle
+          const Text(
+            "Step: 1",
+            style: TextStyle(
+              fontSize: 24.0,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4.0),
+          const Text(
+            "Create your account",
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w400,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 18.0),
+
+          // First Name
+          _buildFieldLabel("First Name", isRequired: true),
+          CustomTextField(
+            fieldKey: const Key('signUpFirstNameField'),
+            controller: _firstNameController,
+            hintText: "First Name",
+            prefixIcon: Icons.person_outline_rounded,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "First name is required";
+              }
+              if (value.trim().length < 2) {
+                return "First name must be at least 2 characters";
+              }
+              if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(value.trim())) {
+                return "First name must contain only letters";
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 14.0),
+
+          // Last Name (optional)
+          _buildFieldLabel("Last Name", optionalText: "optional"),
+          CustomTextField(
+            fieldKey: const Key('signUpLastNameField'),
+            controller: _lastNameController,
+            hintText: "Last Name",
+            prefixIcon: Icons.badge_outlined,
+            validator: (value) {
+              if (value != null && value.trim().isNotEmpty) {
+                if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(value.trim())) {
+                  return "Last name must contain only letters";
+                }
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 14.0),
+
+          // Email (With Duplicate Check)
+          _buildFieldLabel("Email", isRequired: true),
+          CustomTextField(
+            fieldKey: const Key('signUpEmailField'),
+            controller: _signUpEmailController,
+            hintText: "Email",
+            prefixIcon: Icons.mail_outline_rounded,
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "Email address is required";
+              }
+              final emailRegex = RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
+              if (!emailRegex.hasMatch(value.trim())) {
+                return "Please enter a valid email (e.g. name@domain.com)";
+              }
+              final isDuplicate = _registeredAccounts.any(
+                (a) => a.email.toLowerCase() == value.trim().toLowerCase(),
+              );
+              if (isDuplicate) {
+                return "This email is already registered. Please sign in.";
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 14.0),
+
+          // Phone (With Country Picker & Duplicate Check)
+          _buildFieldLabel("Phone", isRequired: true),
+          CustomTextField(
+            fieldKey: const Key('signUpPhoneField'),
+            controller: _phoneController,
+            hintText: "00000 00000",
+            prefixWidget: _buildCountryPicker(
+              selectedCode: _selectedCountryCode,
+              selectedFlag: _selectedCountryFlag,
+              onChanged: (code) {
+                setState(() {
+                  _selectedCountryCode = code;
+                  _updateCountryFlag(code, isSignIn: false);
+                });
+              },
+            ),
+            keyboardType: TextInputType.phone,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return "Phone number is required";
+              }
+              final cleanDigits = value.replaceAll(RegExp(r'[^0-9]'), '');
+              if (cleanDigits.length < 7 || cleanDigits.length > 15) {
+                return "Enter a valid phone number (7-15 digits)";
+              }
+              final isDuplicate = _registeredAccounts.any(
+                (a) => a.phone.replaceAll(RegExp(r'[^0-9]'), '') == cleanDigits,
+              );
+              if (isDuplicate) {
+                return "This phone number is already registered. Please sign in.";
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 14.0),
+
+          // Password
+          _buildFieldLabel(
+            "Password",
+            isRequired: true,
+            showInfo: true,
+            infoMessage: "Minimum 8 characters with letters & numbers",
+          ),
+          CustomTextField(
+            fieldKey: const Key('signUpPasswordField'),
+            controller: _signUpPasswordController,
+            hintText: "Password",
+            isPassword: true,
+            prefixIcon: Icons.lock_outline_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return "Password is required";
+              }
+              if (value.length < 8) {
+                return "Password must be at least 8 characters";
+              }
+              if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d).+$').hasMatch(value)) {
+                return "Password must contain at least one letter and one number";
+              }
+              return null;
+            },
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 4.0, left: 2.0),
+            child: Text(
+              "Minimum 8 characters (letters + numbers)",
+              style: TextStyle(fontSize: 11.5, color: AppTheme.textSecondary),
+            ),
+          ),
+
+          const SizedBox(height: 14.0),
+
+          // Confirm Password
+          _buildFieldLabel("Confirm Password", isRequired: true),
+          CustomTextField(
+            fieldKey: const Key('signUpConfirmPasswordField'),
+            controller: _confirmPasswordController,
+            hintText: "Confirm Password",
+            isPassword: true,
+            prefixIcon: Icons.lock_reset_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return "Please confirm your password";
+              }
+              if (value != _signUpPasswordController.text) {
+                return "Passwords do not match";
+              }
+              return null;
+            },
+          ),
+
+          const SizedBox(height: 14.0),
+
+          // Terms Checkbox
+          InkWell(
+            key: const Key('termsCheckbox'),
+            borderRadius: BorderRadius.circular(8),
+            onTap: () {
+              setState(() {
+                _termsAgreed = !_termsAgreed;
+              });
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: IgnorePointer(
+                    child: Checkbox(
+                      value: _termsAgreed,
+                      activeColor: AppTheme.primaryBlue,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                      onChanged: (_) {},
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      text: "I agree to the ",
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: AppTheme.textSecondary,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: "Terms & Conditions",
+                          style: const TextStyle(
+                            color: AppTheme.primaryBlue,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20.0),
+
+          // Action Buttons: Back & Continue
+          Row(
+            children: [
+              // Back Button
+              Expanded(
+                flex: 1,
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton(
+                    onPressed: () => _goToScreen(AuthScreenState.signIn),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                      side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                    ),
+                    child: const Text(
+                      "Back",
+                      style: TextStyle(
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 14),
+
+              // Continue Button
+              Expanded(
+                flex: 2,
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    key: const Key('continueStep1Button'),
+                    onPressed: _handleContinueStep1,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      elevation: 4,
+                      shadowColor: AppTheme.primaryBlue.withValues(alpha: 0.4),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                    ),
+                    child: const Text(
+                      "Continue",
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16.0),
+
+          // Bottom Toggle
+          Center(
+            child: GestureDetector(
+              key: const Key('switchToSignInButton'),
+              onTap: () => _goToScreen(AuthScreenState.signIn),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.0),
+                child: Text.rich(
+                  TextSpan(
+                    text: "Already have an account? ",
+                    style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                    children: [
+                      TextSpan(
+                        text: "Sign In",
+                        style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // VIEW: 3. REGISTRATION STEP 2 (OTP ONLY)
+  // ==========================================
+  Widget _buildSignUpStep2View() {
+    final targetDestination = _phoneController.text.trim().isNotEmpty
+        ? "$_selectedCountryCode ${_phoneController.text.trim()}"
+        : _signUpEmailController.text.trim();
+
+    return Column(
+      key: const ValueKey('SignUpStep2OtpView'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 11Jobs Logo & Step Indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const BrandLogo(height: 26),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F1FD),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                "STEP 2 OF 2",
+                style: TextStyle(
+                  fontSize: 11.0,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primaryBlue,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 18.0),
+
+        // Title: Step: 2 & OTP Verification
+        const Text(
+          "Step: 2",
+          style: TextStyle(
+            fontSize: 24.0,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4.0),
+        const Text(
+          "OTP Verification",
+          style: TextStyle(
+            fontSize: 17.0,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.primaryBlue,
+          ),
+        ),
+        const SizedBox(height: 6.0),
+        Text(
+          "We have sent a 6-digit verification code to $targetDestination",
+          style: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w400,
+            color: AppTheme.textSecondary,
+            height: 1.4,
+          ),
+        ),
+
+        const SizedBox(height: 26.0),
+
+        // 6-Box Pin Input Field
+        OtpInputField(
+          length: 6,
+          onChanged: (val) {
+            _enteredOtp = val;
+          },
+          onCompleted: (otp) {
+            _enteredOtp = otp;
+          },
+        ),
+
+        const SizedBox(height: 20.0),
+
+        // Resend Code Button / Text
+        Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Didn't receive code? ",
+                  style: TextStyle(
+                    fontSize: 13.0,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: AppTheme.primaryBlue,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        content: const Row(
+                          children: [
+                            Icon(Icons.mark_email_read_rounded, color: Colors.white, size: 18),
+                            SizedBox(width: 10),
+                            Text("A new OTP code has been sent!"),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Resend OTP",
+                    style: TextStyle(
+                      fontSize: 13.0,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryBlue,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 26.0),
+
+        // Action Buttons: Back & Verify OTP
+        Row(
+          children: [
+            // Back Button to Step 1
+            Expanded(
+              flex: 1,
+              child: SizedBox(
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: () => _goToScreen(AuthScreenState.signUpStep1),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                    side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                  ),
+                  child: const Text(
+                    "Back",
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 14),
+
+            // Verify & Complete Registration Button
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  key: const Key('verifyOtpButton'),
+                  onPressed: _isLoading ? null : _handleVerifyOtp,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryBlue,
+                    elevation: 4,
+                    shadowColor: AppTheme.primaryBlue.withValues(alpha: 0.4),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          "Verify OTP",
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16.0),
+
+        // Bottom Toggle
+        Center(
+          child: GestureDetector(
+            onTap: () => _goToScreen(AuthScreenState.signIn),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 4.0),
+              child: Text.rich(
+                TextSpan(
+                  text: "Already have an account? ",
+                  style: TextStyle(fontSize: 12.5, color: AppTheme.textSecondary),
+                  children: [
+                    TextSpan(
+                      text: "Sign In",
+                      style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -270,342 +1447,72 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       backgroundColor: AppTheme.background,
       body: Stack(
         children: [
-          // 1. Background Orbs & Concentric Halos (One-time smooth entrance)
+          // Background Gradient Orbs (Runs single entrance animation only)
           AnimatedCornerShapes(
             entranceProgress: _cornerShapesAnimation,
           ),
 
-          // 2. Central Sign In / Sign Up Card
-          Center(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 32.0),
-              child: AnimatedBuilder(
-                animation: _mainController,
-                builder: (context, child) {
-                  return SlideTransition(
-                    position: _cardSlideAnimation,
-                    child: FadeTransition(
-                      opacity: _cardFadeAnimation,
-                      child: Transform.scale(
-                        scale: _cardScaleAnimation.value,
-                        child: child,
+          // Main Responsive Card Area
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+                child: AnimatedBuilder(
+                  animation: _mainController,
+                  builder: (context, child) {
+                    return SlideTransition(
+                      position: _cardSlideAnimation,
+                      child: FadeTransition(
+                        opacity: _cardFadeAnimation,
+                        child: Transform.scale(
+                          scale: _cardScaleAnimation.value,
+                          child: child,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  constraints: const BoxConstraints(maxWidth: 390),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 30.0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardSurface,
-                    borderRadius: BorderRadius.circular(32.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF005BFF).withValues(alpha: 0.08),
-                        blurRadius: 35.0,
-                        spreadRadius: 2.0,
-                        offset: const Offset(0, 16),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 10.0,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // --- 11Jobs SVG Logo Header ---
-                        AnimatedBuilder(
-                          animation: _mainController,
-                          builder: (context, child) {
-                            return SlideTransition(
-                              position: _logoSlideAnimation,
-                              child: FadeTransition(
-                                opacity: _logoFadeAnimation,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: const Align(
-                            alignment: Alignment.centerLeft,
-                            child: BrandLogo(height: 28),
-                          ),
+                    );
+                  },
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 30.0),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardBackground,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0038A8).withValues(alpha: 0.09),
+                          blurRadius: 36,
+                          offset: const Offset(0, 16),
+                          spreadRadius: 2,
                         ),
-
-                        const SizedBox(height: 20.0),
-
-                        // --- Title & Subtitle: "Sign In" / "Sign Up" ---
-                        AnimatedBuilder(
-                          animation: _mainController,
-                          builder: (context, child) {
-                            return SlideTransition(
-                              position: _titleSlideAnimation,
-                              child: FadeTransition(
-                                opacity: _titleFadeAnimation,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _isSignUp ? "Sign Up" : "Sign In",
-                                style: const TextStyle(
-                                  fontSize: 26.0,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.textPrimary,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                              const SizedBox(height: 6.0),
-                              Text(
-                                _isSignUp
-                                    ? "Create your account to access 11Jobs dashboard"
-                                    : "Login to access your 11Jobs dashboard",
-                                style: const TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w400,
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 24.0),
-
-                        // --- Extra Name Field for Sign Up ---
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 320),
-                          curve: Curves.easeInOutCubic,
-                          child: _isSignUp
-                              ? Padding(
-                                  padding: const EdgeInsets.only(bottom: 16.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildFieldLabel("Full Name"),
-                                      CustomTextField(
-                                        controller: _nameController,
-                                        hintText: "Enter your name",
-                                        prefixIcon: Icons.badge_outlined,
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-
-                        // --- Field 1: Company Email ---
-                        AnimatedBuilder(
-                          animation: _mainController,
-                          builder: (context, child) {
-                            return SlideTransition(
-                              position: _field1SlideAnimation,
-                              child: FadeTransition(
-                                opacity: _field1Animation,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildFieldLabel("Company Email"),
-                              CustomTextField(
-                                controller: _emailController,
-                                hintText: "Email",
-                                prefixIcon: Icons.mail_outline_rounded,
-                                keyboardType: TextInputType.emailAddress,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 16.0),
-
-                        // --- Field 2: Password with Info Icon ---
-                        AnimatedBuilder(
-                          animation: _mainController,
-                          builder: (context, child) {
-                            return SlideTransition(
-                              position: _field2SlideAnimation,
-                              child: FadeTransition(
-                                opacity: _field2Animation,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildFieldLabel("Password", showInfo: true),
-                              CustomTextField(
-                                controller: _passwordController,
-                                hintText: "Password",
-                                isPassword: true,
-                                prefixIcon: Icons.lock_outline_rounded,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // --- Extra Confirm Password for Sign Up ---
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 320),
-                          curve: Curves.easeInOutCubic,
-                          child: _isSignUp
-                              ? Padding(
-                                  padding: const EdgeInsets.only(top: 16.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildFieldLabel("Confirm Password"),
-                                      CustomTextField(
-                                        controller: _confirmPasswordController,
-                                        hintText: "Confirm Password",
-                                        isPassword: true,
-                                        prefixIcon: Icons.lock_reset_rounded,
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-
-                        const SizedBox(height: 10.0),
-
-                        // --- Forgot Password Link (Right Aligned, Sign In mode) ---
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 250),
-                          child: !_isSignUp
-                              ? AnimatedBuilder(
-                                  animation: _mainController,
-                                  builder: (context, child) {
-                                    return FadeTransition(
-                                      opacity: _footerAnimation,
-                                      child: child,
-                                    );
-                                  },
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton(
-                                      onPressed: () {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            backgroundColor: AppTheme.primaryBlue,
-                                            content: const Text(
-                                              "Password reset instructions sent to your email!",
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                            behavior: SnackBarBehavior.floating,
-                                          ),
-                                        );
-                                      },
-                                      style: TextButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 6,
-                                        ),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: const Text(
-                                        "Forgot Password",
-                                        style: TextStyle(
-                                          fontSize: 13.0,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.primaryBlue,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-
-                        const SizedBox(height: 18.0),
-
-                        // --- Sign In / Sign Up Button ---
-                        AnimatedBuilder(
-                          animation: _mainController,
-                          builder: (context, child) {
-                            return SlideTransition(
-                              position: _buttonSlideAnimation,
-                              child: FadeTransition(
-                                opacity: _buttonAnimation,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: AnimatedSignInButton(
-                            text: _isSignUp ? "Sign Up" : "Sign In",
-                            isLoading: _isLoading,
-                            onPressed: _handleAuth,
-                          ),
-                        ),
-
-                        const SizedBox(height: 22.0),
-
-                        // --- Footer Toggle Link: New to 11Jobs? Create New Account ---
-                        AnimatedBuilder(
-                          animation: _mainController,
-                          builder: (context, child) {
-                            return FadeTransition(
-                              opacity: _footerAnimation,
-                              child: child,
-                            );
-                          },
-                          child: Center(
-                            child: GestureDetector(
-                              onTap: _toggleMode,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                child: Text.rich(
-                                  TextSpan(
-                                    text: _isSignUp
-                                        ? "Already have an account? "
-                                        : "New to 11Jobs? ",
-                                    style: const TextStyle(
-                                      fontSize: 13.0,
-                                      color: AppTheme.textSecondary,
-                                      fontWeight: FontWeight.w400,
-                                      fontFamily: 'Roboto',
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: _isSignUp
-                                            ? "Sign In"
-                                            : "Create New Account",
-                                        style: const TextStyle(
-                                          color: AppTheme.primaryBlue,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.2,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 320),
+                      switchInCurve: Curves.easeInOut,
+                      switchOutCurve: Curves.easeInOut,
+                      transitionBuilder: (Widget child, Animation<double> animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.04, 0.0),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _currentScreen == AuthScreenState.signIn
+                          ? _buildSignInView()
+                          : _currentScreen == AuthScreenState.signUpStep1
+                              ? _buildSignUpStep1View()
+                              : _buildSignUpStep2View(),
                     ),
                   ),
                 ),

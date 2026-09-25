@@ -2,27 +2,35 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 class CustomTextField extends StatefulWidget {
+  final Key? fieldKey;
   final String hintText;
-  final IconData prefixIcon;
+  final IconData? prefixIcon;
+  final Widget? prefixWidget;
   final bool isPassword;
   final TextEditingController? controller;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  final AutovalidateMode autovalidateMode;
   final TextInputAction textInputAction;
   final FocusNode? focusNode;
   final void Function(String)? onSubmitted;
+  final void Function(String)? onChanged;
 
   const CustomTextField({
     super.key,
+    this.fieldKey,
     required this.hintText,
-    required this.prefixIcon,
+    this.prefixIcon,
+    this.prefixWidget,
     this.isPassword = false,
     this.controller,
     this.keyboardType = TextInputType.text,
     this.validator,
+    this.autovalidateMode = AutovalidateMode.onUserInteraction,
     this.textInputAction = TextInputAction.next,
     this.focusNode,
     this.onSubmitted,
+    this.onChanged,
   });
 
   @override
@@ -43,9 +51,11 @@ class _CustomTextFieldState extends State<CustomTextField> {
   }
 
   void _onFocusChange() {
-    setState(() {
-      _isFocused = _internalFocusNode.hasFocus;
-    });
+    if (mounted) {
+      setState(() {
+        _isFocused = _internalFocusNode.hasFocus;
+      });
+    }
   }
 
   @override
@@ -60,104 +70,171 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeInOut,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: _isFocused ? Colors.white : const Color(0xFFF3F6FA),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: _isFocused
-              ? AppTheme.primaryBlue.withValues(alpha: 0.4)
-              : const Color(0xFFE5EDF7).withValues(alpha: 0.7),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _isFocused
-                ? AppTheme.primaryBlue.withValues(alpha: 0.08)
-                : Colors.black.withValues(alpha: 0.02),
-            blurRadius: _isFocused ? 14 : 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Icon Container Pill / Badge
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _isFocused
-                  ? AppTheme.primaryBlue.withValues(alpha: 0.12)
-                  : const Color(0xFFE8F1FD),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(
-              widget.prefixIcon,
-              size: 20,
-              color: _isFocused ? AppTheme.primaryBlue : const Color(0xFF005BFF),
-            ),
-          ),
+    return FormField<String>(
+      key: widget.fieldKey,
+      initialValue: widget.controller?.text ?? '',
+      validator: (value) {
+        final currentText = widget.controller != null ? widget.controller!.text : (value ?? '');
+        return widget.validator?.call(currentText);
+      },
+      autovalidateMode: widget.autovalidateMode,
+      builder: (FormFieldState<String> fieldState) {
+        final hasError = fieldState.hasError && fieldState.errorText != null && fieldState.errorText!.isNotEmpty;
 
-          const SizedBox(width: 12),
-
-          // Text Input Field
-          Expanded(
-            child: TextFormField(
-              controller: widget.controller,
-              focusNode: _internalFocusNode,
-              obscureText: _obscureText,
-              keyboardType: widget.keyboardType,
-              textInputAction: widget.textInputAction,
-              validator: widget.validator,
-              onFieldSubmitted: widget.onSubmitted,
-              style: const TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.textPrimary,
-              ),
-              cursorColor: AppTheme.primaryBlue,
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                hintStyle: const TextStyle(
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF94A3B8),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: _isFocused ? Colors.white : const Color(0xFFF3F6FA),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: hasError
+                      ? AppTheme.errorColor
+                      : (_isFocused
+                          ? AppTheme.primaryBlue.withValues(alpha: 0.7)
+                          : const Color(0xFFE5EDF7).withValues(alpha: 0.8)),
+                  width: hasError || _isFocused ? 1.8 : 1.5,
                 ),
-                border: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                disabledBorder: InputBorder.none,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                boxShadow: [
+                  BoxShadow(
+                    color: hasError
+                        ? AppTheme.errorColor.withValues(alpha: 0.08)
+                        : (_isFocused
+                            ? AppTheme.primaryBlue.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.02)),
+                    blurRadius: _isFocused || hasError ? 12 : 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ),
-          ),
+              child: Row(
+                children: [
+                  // Custom Prefix Widget (e.g. Country Code Picker) or Icon Badge
+                  if (widget.prefixWidget != null)
+                    widget.prefixWidget!
+                  else if (widget.prefixIcon != null)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: hasError
+                            ? AppTheme.errorColor.withValues(alpha: 0.1)
+                            : (_isFocused
+                                ? AppTheme.primaryBlue.withValues(alpha: 0.12)
+                                : const Color(0xFFE8F1FD)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        widget.prefixIcon,
+                        size: 18,
+                        color: hasError
+                            ? AppTheme.errorColor
+                            : (_isFocused ? AppTheme.primaryBlue : const Color(0xFF005BFF)),
+                      ),
+                    ),
 
-          // Suffix eye icon for password
-          if (widget.isPassword)
-            IconButton(
-              splashRadius: 20,
-              icon: Icon(
-                _obscureText
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                size: 20,
-                color: const Color(0xFF94A3B8),
+                  if (widget.prefixWidget != null || widget.prefixIcon != null)
+                    const SizedBox(width: 10),
+
+                  // Text Input Field
+                  Expanded(
+                    child: TextField(
+                      controller: widget.controller,
+                      focusNode: _internalFocusNode,
+                      obscureText: _obscureText,
+                      keyboardType: widget.keyboardType,
+                      textInputAction: widget.textInputAction,
+                      onChanged: (val) {
+                        fieldState.didChange(val);
+                        widget.onChanged?.call(val);
+                      },
+                      onSubmitted: widget.onSubmitted,
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textPrimary,
+                      ),
+                      cursorColor: AppTheme.primaryBlue,
+                      decoration: InputDecoration(
+                        hintText: widget.hintText,
+                        hintStyle: const TextStyle(
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.w400,
+                          color: Color(0xFF94A3B8),
+                        ),
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+                      ),
+                    ),
+                  ),
+
+                  // Suffix eye icon for password
+                  if (widget.isPassword)
+                    IconButton(
+                      splashRadius: 18,
+                      icon: Icon(
+                        _obscureText
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 19,
+                        color: hasError ? AppTheme.errorColor : const Color(0xFF94A3B8),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureText = !_obscureText;
+                        });
+                      },
+                    ),
+                ],
               ),
-              onPressed: () {
-                setState(() {
-                  _obscureText = !_obscureText;
-                });
-              },
             ),
-        ],
-      ),
+
+            // Custom Error Message Underneath
+            if (hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 5.0, left: 8.0, right: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 1.5),
+                      child: Icon(
+                        Icons.error_outline_rounded,
+                        size: 13,
+                        color: AppTheme.errorColor,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        fieldState.errorText!,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.errorColor,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
+
+
