@@ -1,30 +1,27 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:_11jobs/main.dart';
+import 'package:_11jobs/screens/home_screen.dart';
+import 'package:_11jobs/widgets/animated_sign_in_button.dart';
+import 'package:_11jobs/widgets/custom_text_field.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Sign In UI test: plays animation once and settles', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
+    // Animation settles completely after running once
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.textContaining('SIGN'), findsWidgets);
+    expect(find.textContaining('Welcome back!'), findsOneWidget);
+    expect(find.byType(CustomTextField), findsNWidgets(2));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // Tap SIGN IN button
+    await tester.tap(find.byType(AnimatedSignInButton));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Check that Home screen appears
+    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.text('COMING SOON'), findsOneWidget);
   });
 }
