@@ -13,11 +13,13 @@ class BrandLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If showContainer is true, we place the SVG inside a sleek dark badge
-    // so the white "11Jobs" lettering in the user's SVG stands out vividly on any background.
+    // The SVG uses white (#f8fcff) text on a transparent background.
+    // When showContainer is true we wrap it in the dark badge so the
+    // white lettering stands out. When false (e.g. on dark/blue backgrounds)
+    // we render the SVG directly — it will be visible against dark surfaces.
     if (showContainer) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           color: const Color(0xFF0A1424),
           borderRadius: BorderRadius.circular(12),
@@ -32,6 +34,8 @@ class BrandLogo extends StatelessWidget {
         child: SvgPicture.asset(
           'assets/icons/11jobs.svg',
           height: height,
+          // Explicitly allow the SVG's own fill colours to render
+          colorFilter: null,
         ),
       );
     }
@@ -39,6 +43,7 @@ class BrandLogo extends StatelessWidget {
     return SvgPicture.asset(
       'assets/icons/11jobs.svg',
       height: height,
+      colorFilter: null,
     );
   }
 }

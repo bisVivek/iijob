@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:country_flags/country_flags.dart';
 import '../models/user_account.dart';
 import '../services/auth_storage_service.dart';
 import '../theme/app_theme.dart';
@@ -47,7 +48,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   // Sign In Mode (Phone with Country Code OR Email)
   SignInMode _signInMode = SignInMode.phone;
   String _signInCountryCode = "+1";
-  String _signInCountryFlag = "🇺🇸";
+  String _signInCountryFlag = "US";
 
   // Sign In Controllers & Keys
   final _signInFormKey = GlobalKey<FormState>();
@@ -65,7 +66,7 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
   final _confirmPasswordController = TextEditingController();
   bool _termsAgreed = false;
   String _selectedCountryCode = "+1";
-  String _selectedCountryFlag = "🇺🇸";
+  String _selectedCountryFlag = "US";
 
   // Step 2: OTP State
   String _enteredOtp = "";
@@ -368,15 +369,15 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
 
   void _updateCountryFlag(String code, {bool isSignIn = false}) {
     const flagMap = {
-      "+1": "🇺🇸",
-      "+91": "🇮🇳",
-      "+44": "🇬🇧",
-      "+61": "🇦🇺",
-      "+49": "🇩🇪",
-      "+971": "🇦🇪",
-      "+65": "🇸🇬",
+      "+1":   "US",
+      "+91":  "IN",
+      "+44":  "GB",
+      "+61":  "AU",
+      "+49":  "DE",
+      "+971": "AE",
+      "+65":  "SG",
     };
-    final flag = flagMap[code] ?? "🇺🇸";
+    final flag = flagMap[code] ?? "US";
 
     if (isSignIn) {
       _signInCountryFlag = flag;
@@ -470,11 +471,15 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            selectedFlag,
-            style: const TextStyle(fontSize: 15),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: CountryFlag.fromCountryCode(
+              selectedFlag,
+              width: 20,
+              height: 14,
+            ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: selectedCode,
@@ -484,34 +489,104 @@ class _AnimatedSignInScreenState extends State<AnimatedSignInScreen>
                 size: 16,
                 color: AppTheme.primaryBlue,
               ),
-              items: const [
+              items: [
                 DropdownMenuItem(
                   value: "+1",
-                  child: Text("+1", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: CountryFlag.fromCountryCode('US', width: 18, height: 13),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text("+1 (US)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                    ],
+                  ),
                 ),
                 DropdownMenuItem(
                   value: "+91",
-                  child: Text("+91", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: CountryFlag.fromCountryCode('IN', width: 18, height: 13),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text("+91 (IN)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                    ],
+                  ),
                 ),
                 DropdownMenuItem(
                   value: "+44",
-                  child: Text("+44", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: CountryFlag.fromCountryCode('GB', width: 18, height: 13),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text("+44 (UK)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                    ],
+                  ),
                 ),
                 DropdownMenuItem(
                   value: "+61",
-                  child: Text("+61", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: CountryFlag.fromCountryCode('AU', width: 18, height: 13),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text("+61 (AU)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                    ],
+                  ),
                 ),
                 DropdownMenuItem(
                   value: "+49",
-                  child: Text("+49", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: CountryFlag.fromCountryCode('DE', width: 18, height: 13),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text("+49 (DE)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                    ],
+                  ),
                 ),
                 DropdownMenuItem(
                   value: "+971",
-                  child: Text("+971", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: CountryFlag.fromCountryCode('AE', width: 18, height: 13),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text("+971 (AE)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                    ],
+                  ),
                 ),
                 DropdownMenuItem(
                   value: "+65",
-                  child: Text("+65", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: CountryFlag.fromCountryCode('SG', width: 18, height: 13),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text("+65 (SG)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                    ],
+                  ),
                 ),
               ],
               onChanged: (val) {

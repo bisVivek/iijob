@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../services/auth_storage_service.dart';
 import '../services/profile_storage_service.dart';
 import 'animated_signin_screen.dart';
@@ -49,34 +48,27 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: widget.totalDuration,
     );
 
-    // 1. Instant Smooth Fade-in (0.0 -> 1.0 in first 0.15s, then STAYS at 1.0 permanently)
+    // 1. Fade-in: 0.0 -> 1.0 over ~200ms with easeOutCubic, then holds permanently
     _logoFadeAnimation = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween<double>(begin: 0.0, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 150.0,
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 200.0,
       ),
       TweenSequenceItem(
         tween: ConstantTween<double>(1.0),
-        weight: 1450.0,
+        weight: 1400.0,
       ),
     ]).animate(_controller);
 
-    // 2. Fast entrance & settle: 0–0.15s (0.94 -> 1.02) -> 0.15–0.30s (1.02 -> 1.00) -> 0.30s onward (STABLE 1.00)
+    // 2. Scale: single smooth ease 0.94 -> 1.00 over ~300ms, no overshoot, then holds
     _logoScaleAnimation = TweenSequence<double>([
-      // 0–0.15s: Smooth scale from 0.94 to 1.02
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.94, end: 1.02)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 150.0,
+        tween: Tween<double>(begin: 0.94, end: 1.00)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 300.0,
       ),
-      // 0.15–0.30s: Subtle natural settle from 1.02 to 1.00
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.02, end: 1.00)
-            .chain(CurveTween(curve: Curves.easeInOutCubic)),
-        weight: 150.0,
-      ),
-      // 0.30s onward: Holds steady and stable at 100%
+      // Holds steady at 100% for the remainder
       TweenSequenceItem(
         tween: ConstantTween<double>(1.00),
         weight: 1300.0,
@@ -106,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       final destination = widget.nextScreen ?? const AnimatedSignInScreen();
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 500),
+          transitionDuration: const Duration(milliseconds: 550),
           pageBuilder: (context, animation, secondaryAnimation) => destination,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             final curvedAnimation = CurvedAnimation(
@@ -117,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             return FadeTransition(
               opacity: curvedAnimation,
               child: ScaleTransition(
-                scale: Tween<double>(begin: 0.95, end: 1.0).animate(curvedAnimation),
+                scale: Tween<double>(begin: 0.98, end: 1.0).animate(curvedAnimation),
                 child: child,
               ),
             );
@@ -162,18 +154,29 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Widget _buildLogoImage() {
-    return Image.asset(
-      'assets/icons/11job_icon_splace.png',
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        return Center(
-          child: SvgPicture.asset(
-            'assets/icons/11jobs.svg',
-            width: 95,
-            fit: BoxFit.contain,
+    // The PNG has a white background — intentionally contain it inside a
+    // rounded white badge (like an app icon) so it looks clean on the blue splash.
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
-        );
-      },
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: Image.asset(
+          'assets/icons/11job_icon_splace.png',
+          fit: BoxFit.contain,
+        ),
+      ),
     );
   }
 }
